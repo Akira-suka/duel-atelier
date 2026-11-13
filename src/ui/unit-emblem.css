@@ -1,0 +1,12 @@
+.gem.unit-gem { isolation: isolate; }
+.unit-gem > .unit-emblem { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1px 1px #020713b3); }
+html[data-theme="atelier"] .token-white { --rim: #e2d8ba; }
+html[data-theme="atelier"] .token-blue { --rim: #70bde7; }
+html[data-theme="atelier"] .token-green { --rim: #64bc9b; }
+html[data-theme="atelier"] .token-red { --rim: #e67b76; }
+html[data-theme="atelier"] .token-black { --rim: #ac96d0; }
+html[data-theme="atelier"] .cost-white { background: #716a5b; border-color: #eee7ce; }
+html[data-theme="atelier"] .cost-blue { background: #23496c; border-color: #70bde7; }
+html[data-theme="atelier"] .cost-green { background: #235e50; border-color: #64bc9b; }
+html[data-theme="atelier"] .cost-red { background: #6c2e38; border-color: #e67b76; }
+html[data-theme="atelier"] .cost-black { background: #453457; border-color: #ac96d0; }

@@ -1,0 +1,105 @@
+.replay-overlay { position: fixed; inset: 0; z-index: 1000; overflow: auto; color: #e5eaf1; background: #080c14; font: 14px/1.45 "Microsoft YaHei", sans-serif; overscroll-behavior: contain; }
+.replay-shell { width: min(1460px, 100%); margin: 0 auto; padding: 24px; }
+.replay-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 16px; }
+.replay-header h2 { margin: 0; font-size: 24px; letter-spacing: 2px; color: #f2dfc1; }
+.replay-header p { margin: 5px 0 0; color: #9ca9ba; font-size: 12px; }
+.replay-overlay button { cursor: pointer; }
+.replay-close, .replay-controls button { color: #f3e5d0; border: 1px solid #6d7390; background: #1d2638; border-radius: 4px; padding: 8px 14px; font: inherit; }
+.replay-overlay button:focus-visible, .replay-overlay input:focus-visible, .replay-overlay summary:focus-visible { outline: 2px solid #f7c47b; outline-offset: 3px; }
+.replay-controls button:disabled { opacity: .35; cursor: default; }
+.replay-analysis { padding: 16px 20px 10px; border: 1px solid #354255; border-radius: 6px; background: linear-gradient(130deg, #172031, #101723); }
+.replay-probabilities { display: flex; align-items: center; gap: 30px; }
+.replay-probability { display: grid; grid-template-columns: auto auto; gap: 0 12px; align-items: baseline; min-width: 140px; }
+.replay-probability > span { grid-column: 1 / -1; font-weight: 700; }
+.replay-probability strong { font: 700 32px/1.3 Arial, sans-serif; }
+.replay-probability small { color: #a9b4c5; font-size: 12px; }
+.replay-name-0 { color: #ffa477; }
+.replay-name-1 { color: #89c8fa; }
+.replay-analysis-status { margin-left: auto; display: grid; gap: 3px; min-width: 210px; font-size: 12px; color: #9eacc0; }
+.replay-analysis-status b { color: #e8dfd4; }
+.replay-analysis-status progress { width: 100%; height: 5px; accent-color: #d4b77b; }
+.replay-chart { margin-top: 8px; }
+.replay-chart svg { display: block; width: 100%; height: 130px; overflow: visible; cursor: crosshair; }
+.replay-chart svg text { fill: #8f9eb4; font: 10px Arial, sans-serif; }
+.replay-gridline { stroke: #a2b5d120; stroke-width: 1; }
+.replay-confidence { fill: #f5a57512; }
+.replay-curve polyline { fill: none; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
+.replay-curve-0 { fill: #ffa477; stroke: #ffa477; }
+.replay-curve-1 { fill: #89c8fa; stroke: #89c8fa; }
+.replay-cursor { stroke: #f2e0ba; stroke-width: 1; stroke-dasharray: 3 3; }
+.replay-legend { display: flex; align-items: center; justify-content: center; gap: 22px; font-size: 11px; color: #9daabe; }
+.replay-method { margin-top: 7px; font-size: 11px; color: #92a0b4; }
+.replay-method summary { cursor: pointer; width: max-content; }
+.replay-method p { max-width: 1000px; line-height: 1.7; margin: 7px 0; }
+.replay-error { color: #ffbdad; margin: 8px 0; font-size: 12px; }
+.replay-controls { display: flex; align-items: center; gap: 8px; margin: 16px 0 10px; }
+.replay-controls input { flex: 1; min-width: 50px; accent-color: #d9b578; }
+.replay-controls output { min-width: 60px; color: #c3cbd8; font: 13px Arial, sans-serif; text-align: center; }
+.replay-controls .replay-play { min-width: 68px; border-color: #ad8a57; background: #453829; }
+.replay-step { display: flex; gap: 16px; align-items: baseline; min-height: 30px; color: #c5cfdd; font-size: 12px; }
+.replay-step b { color: #ead2ac; flex-shrink: 0; }
+.replay-position { display: grid; grid-template-columns: minmax(420px, 1.25fr) minmax(225px, .65fr) minmax(340px, 1fr); gap: 20px; align-items: start; }
+.replay-market { display: grid; gap: 10px; min-width: 0; }
+.replay-market-row { display: flex; gap: 9px; align-items: center; }
+.replay-level { flex: 0 0 32px; color: #e1cda8; font: 700 23px Arial, sans-serif; text-align: center; }
+.replay-level small { display: block; color: #8797ae; font: 10px "Microsoft YaHei", sans-serif; margin-top: 8px; white-space: nowrap; }
+.replay-market-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; width: 100%; }
+.replay-market .jewel-card { width: 100%; height: auto; aspect-ratio: 3/4; min-width: 0; opacity: 1; }
+.replay-card-empty { aspect-ratio: 3/4; border: 1px dashed #546078; border-radius: 3px; background: #161f2b; }
+.replay-position .jewel-card .card-points { font-size: 24px; }
+.replay-position .jewel-card .card-bonus { right: 3px; top: 3px; }
+.replay-position .jewel-card .card-bonus > .gem { width: 24px; height: 23px; }
+.replay-position .jewel-card .card-bonus b { font-size: 11px; }
+.replay-position .jewel-card .card-crowns { gap: 1px; }
+.replay-position .jewel-card .crown-icon { width: 13px; height: 11px; }
+.replay-position .jewel-card .card-cost { gap: 3px; bottom: 4px; left: 5px; }
+.replay-position .cost-pip { width: 17px; height: 17px; }
+.replay-position .cost-pip > .gem { width: 12px; height: 12px; left: -3px; top: -4px; }
+.replay-position .cost-value { width: 17px; height: 17px; }
+.replay-position .card-effects { font-size: 13px; }
+.replay-position .card-effects span { width: 17px; height: 17px; font-size: 13px; }
+.replay-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; padding: 11px; border: 1px solid #526079; border-radius: 5px; background: #1c293b; }
+.replay-board-cell { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; background: #0b1422; box-shadow: inset 0 2px 3px #0006; }
+.replay-board .token { width: 90%; height: 90%; border-width: 1px; }
+.replay-board-caption { display: flex; justify-content: space-between; margin: 9px 0 15px; color: #9caabd; font-size: 11px; }
+.replay-royals { display: flex; gap: 7px; }
+.replay-royals .royal-card, .replay-owned-royals .royal-card { width: 48px; height: 63px; flex: 0 0 auto; opacity: 1; }
+.replay-position .royal-points { font-size: 21px; }
+.replay-position .royal-effect { font-size: 14px; }
+.replay-position .royal-seal { display: none; }
+.replay-players { display: grid; gap: 14px; min-width: 0; }
+.replay-player { border: 1px solid #344257; border-radius: 5px; padding: 11px; background: #151e2c; min-width: 0; }
+.replay-player-active { border-color: #9f8d6c; }
+.replay-player-title { display: flex; justify-content: space-between; align-items: center; }
+.replay-player-title h3 { margin: 0; font-size: 15px; }
+.replay-player-0 h3 { color: #ffa477; }
+.replay-player-1 h3 { color: #89c8fa; }
+.replay-player-title > span { color: #cbbb97; font-size: 10px; }
+.replay-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 8px 0; color: #aab8cb; font-size: 11px; }
+.replay-stats > span { display: inline-flex; align-items: center; gap: 4px; }
+.replay-stats b { font-size: 15px; color: #e8dfce; }
+.replay-stats .crown-icon { width: 17px; height: 15px; }
+.replay-player em { color: #b5e29c; font: 10px Arial, sans-serif; }
+.replay-player em.replay-loss { color: #f2a38f; }
+.replay-resources { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid #49566b55; padding-top: 7px; }
+.replay-resources > span { display: inline-flex; align-items: center; gap: 2px; }
+.replay-resources .gem { width: 21px; height: 21px; }
+.replay-resources b { font: 700 13px Arial, sans-serif; }
+.replay-bonuses { display: flex; gap: 9px; margin: 8px 0; }
+.replay-bonuses > span { display: grid; grid-template-columns: 18px auto; gap: 0 2px; align-items: center; }
+.replay-bonuses .gem { width: 18px; height: 18px; }
+.replay-bonuses b { font: 11px Arial, sans-serif; }
+.replay-bonuses small { grid-column: 1 / -1; font-size: 9px; color: #8f9eb0; text-align: center; }
+.replay-owned { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 6px; min-height: 30px; }
+.replay-owned > div { flex: 0 0 58px; width: 58px; }
+.replay-owned .jewel-card { width: 58px; height: 79px; min-width: 0; opacity: 1; }
+.replay-owned .card-cost, .replay-owned .card-effects { display: none; }
+.replay-owned .replay-gained { outline: 2px solid #d6be84; outline-offset: 1px; border-radius: 3px; }
+.replay-empty { color: #7f90a5; font-size: 11px; }
+.replay-owned-royals { display: flex; gap: 6px; margin-top: 5px; }
+.replay-card-details { margin-top: 5px; border-top: 1px solid #49566b55; padding-top: 6px; }
+.replay-card-details summary { color: #9eacc0; cursor: pointer; font-size: 10px; }
+.replay-card-details h4 { color: #a9b8cc; font-size: 10px; font-weight: 400; margin: 7px 0 2px; }
+@media (max-width: 1150px) { .replay-position { grid-template-columns: minmax(390px, 1.5fr) minmax(225px, 1fr); } .replay-players { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .replay-shell { padding: 14px; } .replay-analysis { padding: 12px; } .replay-probabilities { flex-wrap: wrap; gap: 14px; } .replay-probability { min-width: 120px; } .replay-analysis-status { width: 100%; margin-left: 0; grid-template-columns: 1fr 1fr; min-width: 0; } .replay-analysis-status progress { align-self: center; } .replay-chart svg { height: 140px; } .replay-controls { flex-wrap: wrap; } .replay-controls input { order: 2; flex-basis: calc(100% - 80px); } .replay-controls output { order: 2; } .replay-controls button { padding: 7px 11px; } .replay-position { grid-template-columns: minmax(0, 1fr); gap: 16px; } .replay-board-area { width: min(310px, 100%); justify-self: center; } .replay-players { grid-template-columns: minmax(0, 1fr); } .replay-market-row { gap: 5px; } .replay-market-cards { gap: 5px; } .replay-level { flex-basis: 24px; } .replay-market .card-points { font-size: 20px; } .replay-step { gap: 10px; } .replay-legend { gap: 12px; font-size: 10px; } }
+@media (prefers-reduced-motion: reduce) { .replay-overlay *, .replay-overlay *::before, .replay-overlay *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

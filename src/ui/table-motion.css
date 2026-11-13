@@ -1,0 +1,6 @@
+.table-motion-layer { position: fixed; inset: 0; z-index: 30; overflow: visible; pointer-events: none; }
+.table-motion-layer *, .table-motion-layer *::before, .table-motion-layer *::after { pointer-events: none !important; }
+.table-motion-ghost { position: absolute; transform-origin: center; perspective: 700px; will-change: transform, opacity; }
+.table-motion-face { position: absolute; inset: 0; backface-visibility: hidden; transform-origin: center; }
+.table-motion-back { border: 1px solid #b8a3d9; border-radius: 5px; background-color: #111729; background-size: cover; background-position: center; box-shadow: 0 3px 8px #04081299; }
+.table-motion-layer button { cursor: default; }
