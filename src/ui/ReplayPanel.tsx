@@ -3,13 +3,16 @@ import { getJewel, getRoyal } from '../game/catalog';
 import { getStats } from '../game/engine';
 import { replayMatch, type MatchRecord } from '../game/match';
 import { GEM_COLORS, TOKEN_COLORS, type Action, type CardSource, type GameState, type PlayerId } from '../game/types';
-import { summarizeEstimate, type AnalysisResponse, type WinEstimate } from '../analysis/win-probability';
+import { summarizeEstimate, type WinEstimate } from '../analysis/win-probability';
+import { STANDARD_SAMPLES, DEEP_SAMPLES, type AnalysisMethod, type ProgressiveResponse } from '../analysis/progressive';
 import { getCardArt, RESOURCE_NAMES } from '../theme';
 import { Card, Crown, Gem, Royal, Token } from './TablePieces';
 import './replay.css';
 
-const cache = new WeakMap<MatchRecord, (WinEstimate | undefined)[]>();
-const SAMPLES = 24;
+const cache = new WeakMap<MatchRecord, Partial<Record<AnalysisMethod, (WinEstimate | undefined)[]>>>();
+function saveEstimates(record: MatchRecord, method: AnalysisMethod, values: (WinEstimate | undefined)[]) {
+  cache.set(record, { ...cache.get(record), [method]: values });
+}
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 const delta = (value: number) => value > 0 ? `+${value}` : String(value);
 
@@ -37,12 +40,12 @@ function actionSummary(action: Action, before: GameState): string {
   return `${actor.name} · ${detail}`;
 }
 
-function initialEstimates(record: MatchRecord, frames: GameState[]) {
-  const values = cache.get(record)?.slice() ?? [];
+function initialEstimates(record: MatchRecord, frames: GameState[], method: AnalysisMethod) {
+  const values = cache.get(record)?.[method]?.slice() ?? [];
   frames.forEach((state, index) => {
     if (state.phase === 'gameOver' && state.winner !== null) values[index] = summarizeEstimate(state, [0, 0], 0, 0);
   });
-  cache.set(record, values);
+  saveEstimates(record, method, values);
   return values;
 }
 
@@ -125,12 +128,16 @@ export function ReplayPanel({ record, onClose }: { record: MatchRecord; onClose:
   const frames = rebuilt.frames;
   const [index, setIndex] = useState(frames.length - 1);
   const [playing, setPlaying] = useState(false);
-  const [estimates, setEstimates] = useState(() => initialEstimates(record, frames));
+  const [method, setMethod] = useState<AnalysisMethod>('baseline');
+  const [estimates, setEstimates] = useState(() => initialEstimates(record, frames, 'baseline'));
   const [analysisError, setAnalysisError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
+  const analysisWorker = useRef<{ worker: Worker; id: string } | null>(null);
+  const selectedStep = useRef(index);
   const panel = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const safeIndex = Math.max(0, Math.min(index, frames.length - 1));
+  selectedStep.current = safeIndex;
   const state = frames[safeIndex];
   const previous = frames[Math.max(0, safeIndex - 1)];
   const current = estimates[safeIndex];
@@ -138,6 +145,7 @@ export function ReplayPanel({ record, onClose }: { record: MatchRecord; onClose:
   const names: [string, string] = [state.players[0].name, state.players[1].name];
   const partial = record.initial.revision > 0;
   const finishedPoints = frames.reduce((total, _, step) => total + Number(estimates[step] !== undefined), 0);
+  const refinedPoints = frames.reduce((total, _, step) => total + Number(estimates[step]?.terminal || (estimates[step]?.requested ?? 0) >= STANDARD_SAMPLES), 0);
   const select = (step: number) => { setPlaying(false); setIndex(Math.max(0, Math.min(frames.length - 1, step))); };
 
   useEffect(() => {
@@ -154,42 +162,54 @@ export function ReplayPanel({ record, onClose }: { record: MatchRecord; onClose:
   }, [playing, safeIndex, frames.length]);
 
   useEffect(() => {
-    const values = initialEstimates(record, frames);
+    const values = initialEstimates(record, frames, method);
     setEstimates(values.slice());
     setAnalysisError('');
-    const missing = frames.map((_, step) => step).filter(step => !values[step]);
-    if (rebuilt.error || !missing.length) { setAnalyzing(false); return; }
+    if (rebuilt.error) { setAnalyzing(false); return; }
     let alive = true;
     let worker: Worker;
     setAnalyzing(true);
     const id = `replay-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
       worker = new Worker(new URL('../analysis/analysis.worker.ts', import.meta.url), { type: 'module' });
-      worker.onmessage = (event: MessageEvent<AnalysisResponse>) => {
+      analysisWorker.current = { worker, id };
+      worker.onmessage = (event: MessageEvent<ProgressiveResponse>) => {
         if (!alive || event.data.id !== id) return;
         const message = event.data;
         if (message.type === 'point') {
-          const step = missing[message.index];
-          if (step === undefined) return;
+          const step = message.index;
+          if (!frames[step]) return;
           values[step] = message.estimate;
-          cache.set(record, values);
+          saveEstimates(record, method, values);
           setEstimates(values.slice());
         } else if (message.type === 'done') {
-          setAnalyzing(false); worker.terminate();
+          setAnalyzing(false);
         } else {
-          setAnalysisError(message.message); setAnalyzing(false); worker.terminate();
+          setAnalysisError(message.message); setAnalyzing(false); worker.terminate(); analysisWorker.current = null;
         }
       };
       worker.onerror = event => {
         if (!alive) return;
-        setAnalysisError(event.message || '本地模拟暂时无法运行'); setAnalyzing(false); worker.terminate();
+        setAnalysisError(event.message || '本地模拟暂时无法运行'); setAnalyzing(false); worker.terminate(); analysisWorker.current = null;
       };
-      worker.postMessage({ type: 'analyze', id, states: missing.map(step => frames[step]), options: { samples: SAMPLES } });
+      worker.postMessage({ type: 'analyze', id, states: frames, method, resume: values, focus: selectedStep.current });
     } catch (error) {
       setAnalysisError(error instanceof Error ? error.message : '浏览器无法启动本地模拟'); setAnalyzing(false);
     }
-    return () => { alive = false; worker?.terminate(); };
-  }, [record, frames, rebuilt.error]);
+    return () => { alive = false; worker?.terminate(); analysisWorker.current = null; };
+  }, [record, frames, rebuilt.error, method]);
+
+  useEffect(() => {
+    const active = analysisWorker.current;
+    if (active) active.worker.postMessage({ type: 'focus', id: active.id, index: safeIndex });
+  }, [safeIndex]);
+
+  const deepen = () => {
+    const active = analysisWorker.current;
+    if (!active) return;
+    setAnalyzing(true);
+    active.worker.postMessage({ type: 'focus', id: active.id, index: safeIndex, deep: true });
+  };
 
   const summary = safeIndex > 0 ? actionSummary(record.actions[safeIndex - 1], previous) : undefined;
   return <div className="replay-overlay" role="dialog" aria-modal="true" aria-labelledby="replay-title" ref={panel} onKeyDown={event => {
@@ -204,10 +224,16 @@ export function ReplayPanel({ record, onClose }: { record: MatchRecord; onClose:
       <header className="replay-header"><div><h2 id="replay-title">对局回放</h2><p>{partial ? `从续局开始记录 · 起始已完成 ${record.initial.revision} 步` : '完整对局记录'} · {frames.length - 1} 步行动{frames.length === 1 ? ' · 只有当前终局快照，没有早期行动记录' : ''}</p></div><button ref={closeButton} type="button" className="replay-close" onClick={() => { setPlaying(false); onClose(); }} aria-label="关闭回放">关闭 ×</button></header>
       {rebuilt.error && <p role="alert" className="replay-error">记录重建失败：{rebuilt.error}</p>}
       <section className="replay-analysis" aria-label="本地模拟胜率">
-        <div className="replay-probabilities">{([0, 1] as const).map(id => <div key={id} className={`replay-probability replay-name-${id}`}><span>{names[id]}</span><strong>{roundedProbability !== null ? `${id === 0 ? roundedProbability : 100 - roundedProbability}%` : estimates[safeIndex] ? '暂无估计' : analysisError ? '未计算' : '计算中'}</strong><small>{current?.terminal ? '本局结果' : current?.probability != null ? `${id === 0 ? Math.round(current.interval[0] * 100) : 100 - Math.round(current.interval[1] * 100)}%–${id === 0 ? Math.round(current.interval[1] * 100) : 100 - Math.round(current.interval[0] * 100)}%` : '—'}</small></div>)}<div className="replay-analysis-status"><b>本地模拟估计</b><span>{analyzing ? '正在分析' : analysisError ? '分析已中断' : '分析完成'} · {finishedPoints}/{frames.length} 个局面</span><progress max={frames.length} value={finishedPoints} aria-label="胜率分析进度" /><small>{current?.terminal ? '终局直接采用真实结果' : current ? `${current.completed}/${current.requested} 次模拟完成${current.unfinished ? `，${current.unfinished} 次截断` : ''}` : `每步 ${SAMPLES} 次模拟`}</small></div></div>
+        <div className="replay-analysis-modes" role="group" aria-label="预测策略">
+          {(['baseline', 'search'] as const).map(value => <button type="button" key={value} aria-pressed={method === value} onClick={() => {
+            if (method !== value) { setEstimates(initialEstimates(record, frames, value)); setMethod(value); }
+          }}>{value === 'baseline' ? '快速基线' : '搜索复核 · 较慢'}</button>)}
+          <span>搜索策略对战更强，概率误差暂未优于基线</span>
+        </div>
+        <div className="replay-probabilities">{([0, 1] as const).map(id => <div key={id} className={`replay-probability replay-name-${id}`}><span>{names[id]}</span><strong>{roundedProbability !== null ? `${id === 0 ? roundedProbability : 100 - roundedProbability}%` : estimates[safeIndex] ? '暂无估计' : analysisError ? '未计算' : '计算中'}</strong><small>{current?.terminal ? '本局结果' : current?.probability != null ? `${id === 0 ? Math.round(current.interval[0] * 100) : 100 - Math.round(current.interval[1] * 100)}%–${id === 0 ? Math.round(current.interval[1] * 100) : 100 - Math.round(current.interval[0] * 100)}%` : '—'}</small></div>)}<div className="replay-analysis-status"><b>{method === 'search' ? '搜索续弈估计' : '快速续弈估计'}</b><span>{analyzing ? '正在分析' : analysisError ? '分析已中断' : '分析完成'} · {finishedPoints}/{frames.length} 已出结果 · {refinedPoints} 已精算</span><progress max={frames.length} value={refinedPoints} aria-label="胜率分析进度" /><small>{current?.terminal ? '终局直接采用真实结果' : current ? `${current.completed}/${current.requested} 次模拟完成${current.unfinished ? `，${current.unfinished} 次截断` : ''}` : `先 8 次，再补至 ${STANDARD_SAMPLES} 次`}</small><button type="button" onClick={deepen} disabled={!!current?.terminal || (current?.requested ?? 0) >= DEEP_SAMPLES || !!analysisError}>精算此步 · {DEEP_SAMPLES} 次</button></div></div>
         <ProbabilityChart estimates={estimates} index={safeIndex} count={frames.length} names={names} onSelect={select} />
         {analysisError && <p className="replay-error" role="status">{analysisError}；已完成的结果仍可查看，关闭重开可继续。</p>}
-        <details className="replay-method"><summary>估计方法</summary><p>双方使用同一套本地随机决策策略重复模拟，打乱未知牌库和袋中筹码。局后分析使用双方在该步已预留牌的完整信息。曲线反映该模拟策略下的胜率，并非训练模型评分或对真实玩家的胜负保证。95% 区间仅描述抽样误差，未包含策略与真人的差异；截断模拟会扩大区间。没有完成的模拟时不显示胜率。历史步骤独立估计，不读取后续实际行动，最终真实胜者只用于终局帧。</p></details>
+        <details className="replay-method"><summary>估计方法</summary><p>快速基线使用原有随机启发式策略；搜索复核加入战术检查与有限预算 MCTS。两种策略分别统计、分别缓存。每次从当前局面重新打乱未知牌库和袋中筹码，续弈到实际终局后统计胜负。搜索叶评分和访问次数不直接作为胜率。优先分析选中的步骤，其余步骤先做 8 次再补至 24 次，可单独精算至 64 次；关闭回放会停止计算，重开继续已有样本。局后分析使用双方当时预留牌的完整信息，不读取之后的实际行动。胜率仅针对这套模拟策略，不等于真人胜率。阴影是单个固定样本量的 95% 抽样区间，不保证整条曲线或反复查看时同时覆盖，也不包含策略误差；截断会扩大区间。最终真实胜者只用于终局帧。</p></details>
       </section>
       <nav className="replay-controls" aria-label="回放步骤"><button type="button" onClick={() => select(0)} disabled={safeIndex === 0}>起始</button><button type="button" onClick={() => select(safeIndex - 1)} disabled={safeIndex === 0} aria-label="上一步">←</button><button type="button" className="replay-play" disabled={frames.length < 2} onClick={() => { if (!playing && safeIndex === frames.length - 1) setIndex(0); setPlaying(value => !value); }}>{playing ? '暂停' : '播放'}</button><button type="button" onClick={() => select(safeIndex + 1)} disabled={safeIndex === frames.length - 1} aria-label="下一步">→</button><input type="range" min="0" max={frames.length - 1} value={safeIndex} disabled={frames.length < 2} aria-label="回放步骤" aria-valuetext={`第 ${safeIndex} 步，共 ${frames.length - 1} 步`} onChange={event => select(Number(event.target.value))} /><output>{safeIndex} / {frames.length - 1}</output><button type="button" onClick={() => select(frames.length - 1)} disabled={safeIndex === frames.length - 1}>终局</button></nav>
       <div className="replay-step"><b>{safeIndex === 0 ? '起始局面' : `第 ${safeIndex} 步`}</b><span>{summary ?? (state.winner !== null ? `${state.players[state.winner].name}获胜` : `第 ${state.turnNumber} 回合 · ${state.players[state.turn].name}`)}</span></div>

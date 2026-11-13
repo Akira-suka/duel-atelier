@@ -3,9 +3,13 @@
 A free, open-source local two-player strategy game and AI analysis sandbox.
 非官方的 Splendor Duel 基础版规则实现，供学习、研究和双人同机对战参考。
 
+![公开版牌桌](docs/images/table.jpg)
+
 ## 快速开始
 
-需要 **Node.js 24+**。下载本仓库 ZIP 并解压，或：
+需要 **Node.js 24+**。[Release](https://github.com/Akira-suka/duel-atelier/releases/latest)
+提供已构建包：解压后双击 `play-built.cmd`，打开 `http://127.0.0.1:4173/`，无需安装 npm 依赖。
+开发与修改则下载源码 ZIP，或：
 
 ```powershell
 git clone https://github.com/Akira-suka/duel-atelier.git
@@ -30,11 +34,18 @@ npm run preview
 - 同机热座、私人预留牌遮挡、三种获胜条件和完整卡牌能力流程。
 - 卡牌、资源与付款动画；可购买卡牌金光；单次提交防重复。
 - 每个执行动作的记录与终局回放，历史牌市、资源和双方状态同步查看。
-- 本地 Monte Carlo 胜率分析、抽样区间、后台计算与取消。
+- 快速基线与战术＋MCTS 搜索复核，两种胜率独立计算与缓存。
+- 渐进采样：先 8 次，再 24 次；优先当前步骤，可单步增至 64 次；关闭停止、重开续算。
 - 确定性规则引擎、存档校验及可复现测试。
 
 当前模拟胜率取决于模拟策略，并非经过真人对局校准的概率。
 旧版纯局面存档可以继续游戏，但无法恢复导入前的行动历史。
+
+v0.2 独立验收：新策略对旧策略 **54 胜 10 负**（32 个种子换边、共 64 局）；
+24 个保留局面的 Brier 误差 **0.222584 → 0.222656，未改善**。
+因此默认保留快速基线，搜索复核作为可选功能，不宣称预测精度已经提高。
+原始结果、耗时及复现命令见 [AI_EVALUATION.md](docs/AI_EVALUATION.md)，
+算法与限制见 [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md)。
 
 ## 许可与第三方边界
 

@@ -1,0 +1,2146 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-13T11:36:15.448Z",
+  "config": {
+    "mode": "full",
+    "section": "all",
+    "pairs": 32,
+    "positions": 24,
+    "samples": 24,
+    "iterations": 24,
+    "predictionIterations": 8,
+    "maxActions": 600,
+    "repeats": 2,
+    "prefix": "duel-acceptance-v2"
+  },
+  "sources": {
+    "src/analysis/win-probability.ts": "e9e3d0e4931c4b9d6a2cbee18517e01c6763363e0a3d88d97cee159bd81e0045",
+    "src/analysis/search-policy.ts": "1934742b162219653dba22db779874d42f34258638708bfc6dc7ba2521cb7279",
+    "src/analysis/search.ts": "ed997e7ed32ca5f98f646fe9a0c8fa29db0e9fdb6f7c1cecf4c08e7fcc45240b",
+    "src/analysis/tactics.ts": "cc4c6c586e1a56df260ed89140640e2b2d5ee461f1cf682aa69fab89474154d9",
+    "src/analysis/evaluation.ts": "13ce1078ae68488f03d24365b959358fadb45c644838798bb57ad14a062b4f25"
+  },
+  "environment": {
+    "node": "v24.13.1",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpu": "AMD Ryzen 7 8845H w/ Radeon 780M Graphics",
+    "logicalCpus": 16,
+    "memoryGiB": 31.3
+  },
+  "interpretation": [
+    "Fixed budgets and deterministic seeds; no wall-clock search cutoff.",
+    "Arena legs share a seed and exchange algorithm seats; confidence bounds group both legs by seed.",
+    "Unfinished games are never treated as losses or draws.",
+    "Prediction outcomes come from separate economy/points/crowns reference players, not either evaluated policy.",
+    "Reference-policy outcomes measure cross-policy generalization, not human calibration or optimal-play truth.",
+    "One nonterminal position at preselected ply 35 per held-out game; no adjacent-position train/test split.",
+    "Small smoke/full samples are diagnostics; favorable point estimates alone do not establish superiority."
+  ],
+  "tactics": {
+    "baseline": [
+      {
+        "id": "finish-prestige",
+        "description": "17声望可直接购入3分牌",
+        "passed": true,
+        "actions": [
+          {
+            "type": "buy",
+            "source": {
+              "kind": "market",
+              "level": 1,
+              "index": 0
+            },
+            "payment": {
+              "white": 0,
+              "blue": 0,
+              "green": 0,
+              "red": 4,
+              "black": 0,
+              "pearl": 1,
+              "gold": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "finish-crowns",
+        "description": "8皇冠可直接购入2皇冠牌",
+        "passed": true,
+        "actions": [
+          {
+            "type": "buy",
+            "source": {
+              "kind": "market",
+              "level": 3,
+              "index": 0
+            },
+            "payment": {
+              "white": 4,
+              "blue": 2,
+              "green": 0,
+              "red": 3,
+              "black": 0,
+              "pearl": 1,
+              "gold": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "finish-color",
+        "description": "白色7分可直接购入白色3分牌",
+        "passed": true,
+        "actions": [
+          {
+            "type": "buy",
+            "source": {
+              "kind": "market",
+              "level": 3,
+              "index": 0
+            },
+            "payment": {
+              "white": 0,
+              "blue": 3,
+              "green": 0,
+              "red": 4,
+              "black": 2,
+              "pearl": 1,
+              "gold": 0
+            }
+          },
+          {
+            "type": "chooseRoyal",
+            "cardId": "r4"
+          }
+        ]
+      },
+      {
+        "id": "steal-defense",
+        "description": "偷红币阻止对手购入4分牌获胜；偷珍珠虽让自己可购牌却丢失防守",
+        "passed": false,
+        "actions": [
+          {
+            "type": "stealToken",
+            "color": "pearl"
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "id": "finish-prestige",
+        "description": "17声望可直接购入3分牌",
+        "passed": true,
+        "actions": [
+          {
+            "type": "buy",
+            "source": {
+              "kind": "market",
+              "level": 1,
+              "index": 0
+            },
+            "payment": {
+              "white": 0,
+              "blue": 0,
+              "green": 0,
+              "red": 4,
+              "black": 0,
+              "pearl": 1,
+              "gold": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "finish-crowns",
+        "description": "8皇冠可直接购入2皇冠牌",
+        "passed": true,
+        "actions": [
+          {
+            "type": "buy",
+            "source": {
+              "kind": "market",
+              "level": 3,
+              "index": 0
+            },
+            "payment": {
+              "white": 4,
+              "blue": 2,
+              "green": 0,
+              "red": 3,
+              "black": 0,
+              "pearl": 1,
+              "gold": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "finish-color",
+        "description": "白色7分可直接购入白色3分牌",
+        "passed": true,
+        "actions": [
+          {
+            "type": "buy",
+            "source": {
+              "kind": "market",
+              "level": 3,
+              "index": 0
+            },
+            "payment": {
+              "white": 0,
+              "blue": 3,
+              "green": 0,
+              "red": 4,
+              "black": 2,
+              "pearl": 1,
+              "gold": 0
+            }
+          },
+          {
+            "type": "chooseRoyal",
+            "cardId": "r4"
+          }
+        ]
+      },
+      {
+        "id": "steal-defense",
+        "description": "偷红币阻止对手购入4分牌获胜；偷珍珠虽让自己可购牌却丢失防守",
+        "passed": true,
+        "actions": [
+          {
+            "type": "stealToken",
+            "color": "red"
+          }
+        ]
+      }
+    ]
+  },
+  "arena": {
+    "games": [
+      {
+        "pairId": "duel-acceptance-v2:arena:1",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 93,
+        "milliseconds": 426.03880000000004,
+        "candidateDecisionMilliseconds": 398.64219999999995,
+        "candidateDecisions": 46,
+        "baselineDecisionMilliseconds": 8.632300000000043,
+        "baselineDecisions": 47
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:1",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 78,
+        "milliseconds": 335.72659999999996,
+        "candidateDecisionMilliseconds": 317.2428,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 6.067100000000096,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:2",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 77,
+        "milliseconds": 330.63689999999997,
+        "candidateDecisionMilliseconds": 309.30409999999995,
+        "candidateDecisions": 39,
+        "baselineDecisionMilliseconds": 7.996699999999805,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:2",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 85,
+        "milliseconds": 407.0987,
+        "candidateDecisionMilliseconds": 386.0618000000002,
+        "candidateDecisions": 39,
+        "baselineDecisionMilliseconds": 5.676600000000008,
+        "baselineDecisions": 46
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:3",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 91,
+        "milliseconds": 442.2246,
+        "candidateDecisionMilliseconds": 421.7667999999992,
+        "candidateDecisions": 47,
+        "baselineDecisionMilliseconds": 6.5927000000017415,
+        "baselineDecisions": 44
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:3",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 81,
+        "milliseconds": 291.8449999999998,
+        "candidateDecisionMilliseconds": 271.3004000000026,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 5.953399999998965,
+        "baselineDecisions": 39
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:4",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 80,
+        "milliseconds": 292.64339999999993,
+        "candidateDecisionMilliseconds": 275.5455000000002,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 5.184400000001915,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:4",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 88,
+        "milliseconds": 306.50589999999966,
+        "candidateDecisionMilliseconds": 286.1333999999988,
+        "candidateDecisions": 45,
+        "baselineDecisionMilliseconds": 5.615200000000186,
+        "baselineDecisions": 43
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:5",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "baseline",
+        "actions": 80,
+        "milliseconds": 462.1945999999998,
+        "candidateDecisionMilliseconds": 439.02019999999857,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 6.759899999998652,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:5",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 75,
+        "milliseconds": 514.6487999999999,
+        "candidateDecisionMilliseconds": 488.92710000000125,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 6.796000000003005,
+        "baselineDecisions": 34
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:6",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 81,
+        "milliseconds": 680.2416000000003,
+        "candidateDecisionMilliseconds": 652.238200000003,
+        "candidateDecisions": 43,
+        "baselineDecisionMilliseconds": 9.04019999999673,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:6",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 73,
+        "milliseconds": 520.6481999999996,
+        "candidateDecisionMilliseconds": 496.67319999999654,
+        "candidateDecisions": 37,
+        "baselineDecisionMilliseconds": 7.667099999998754,
+        "baselineDecisions": 36
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:7",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 68,
+        "milliseconds": 364.3115000000007,
+        "candidateDecisionMilliseconds": 346.184400000001,
+        "candidateDecisions": 36,
+        "baselineDecisionMilliseconds": 5.733700000000681,
+        "baselineDecisions": 32
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:7",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 90,
+        "milliseconds": 601.8370999999997,
+        "candidateDecisionMilliseconds": 573.6338999999998,
+        "candidateDecisions": 47,
+        "baselineDecisionMilliseconds": 8.38380000000052,
+        "baselineDecisions": 43
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:8",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 82,
+        "milliseconds": 627.6472000000003,
+        "candidateDecisionMilliseconds": 597.7426000000069,
+        "candidateDecisions": 44,
+        "baselineDecisionMilliseconds": 9.306099999997969,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:8",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 75,
+        "milliseconds": 463.4547999999995,
+        "candidateDecisionMilliseconds": 439.60409999999865,
+        "candidateDecisions": 38,
+        "baselineDecisionMilliseconds": 6.994200000000092,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:9",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 71,
+        "milliseconds": 516.9156999999996,
+        "candidateDecisionMilliseconds": 494.9785000000029,
+        "candidateDecisions": 39,
+        "baselineDecisionMilliseconds": 6.618199999999888,
+        "baselineDecisions": 32
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:9",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 80,
+        "milliseconds": 418.7972000000009,
+        "candidateDecisionMilliseconds": 391.93429999999626,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 9.077099999999518,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:10",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 93,
+        "milliseconds": 712.4831999999997,
+        "candidateDecisionMilliseconds": 679.6303999999936,
+        "candidateDecisions": 45,
+        "baselineDecisionMilliseconds": 9.952700000011646,
+        "baselineDecisions": 48
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:10",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 84,
+        "milliseconds": 690.5010000000002,
+        "candidateDecisionMilliseconds": 662.4225000000006,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 8.567599999994854,
+        "baselineDecisions": 42
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:11",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 77,
+        "milliseconds": 375.5668000000005,
+        "candidateDecisionMilliseconds": 352.4391999999971,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 6.98489999999947,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:11",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 73,
+        "milliseconds": 453.5776999999998,
+        "candidateDecisionMilliseconds": 427.70440000000417,
+        "candidateDecisions": 37,
+        "baselineDecisionMilliseconds": 9.808199999999488,
+        "baselineDecisions": 36
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:12",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 86,
+        "milliseconds": 663.681700000001,
+        "candidateDecisionMilliseconds": 634.8582000000024,
+        "candidateDecisions": 43,
+        "baselineDecisionMilliseconds": 10.062999999996464,
+        "baselineDecisions": 43
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:12",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 79,
+        "milliseconds": 596.7347000000009,
+        "candidateDecisionMilliseconds": 571.8112999999976,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 8.628500000002532,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:13",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 77,
+        "milliseconds": 480.8592000000008,
+        "candidateDecisionMilliseconds": 457.0565000000024,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 7.997299999999086,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:13",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 83,
+        "milliseconds": 460.5010999999995,
+        "candidateDecisionMilliseconds": 433.366399999999,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 8.966200000002573,
+        "baselineDecisions": 43
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:14",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 77,
+        "milliseconds": 403.9385000000002,
+        "candidateDecisionMilliseconds": 380.62560000000485,
+        "candidateDecisions": 39,
+        "baselineDecisionMilliseconds": 7.652699999996912,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:14",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 79,
+        "milliseconds": 374.65890000000036,
+        "candidateDecisionMilliseconds": 352.23859999999877,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 7.2995000000009895,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:15",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 84,
+        "milliseconds": 418.307499999999,
+        "candidateDecisionMilliseconds": 395.0490000000027,
+        "candidateDecisions": 44,
+        "baselineDecisionMilliseconds": 7.4869999999991705,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:15",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 95,
+        "milliseconds": 440.44840000000113,
+        "candidateDecisionMilliseconds": 414.7836000000025,
+        "candidateDecisions": 47,
+        "baselineDecisionMilliseconds": 7.973300000001473,
+        "baselineDecisions": 48
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:16",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 74,
+        "milliseconds": 388.2071999999989,
+        "candidateDecisionMilliseconds": 367.2951000000012,
+        "candidateDecisions": 37,
+        "baselineDecisionMilliseconds": 6.959200000002966,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:16",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 70,
+        "milliseconds": 341.3588,
+        "candidateDecisionMilliseconds": 323.33139999999,
+        "candidateDecisions": 37,
+        "baselineDecisionMilliseconds": 5.877999999998792,
+        "baselineDecisions": 33
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:17",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 70,
+        "milliseconds": 415.65780000000086,
+        "candidateDecisionMilliseconds": 392.6054999999924,
+        "candidateDecisions": 34,
+        "baselineDecisionMilliseconds": 8.026199999998425,
+        "baselineDecisions": 36
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:17",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 79,
+        "milliseconds": 476.1189999999988,
+        "candidateDecisionMilliseconds": 451.52760000001035,
+        "candidateDecisions": 44,
+        "baselineDecisionMilliseconds": 8.501400000001013,
+        "baselineDecisions": 35
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:18",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 83,
+        "milliseconds": 612.6186999999991,
+        "candidateDecisionMilliseconds": 585.5850999999948,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 8.782200000001467,
+        "baselineDecisions": 42
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:18",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 87,
+        "milliseconds": 644.7577999999994,
+        "candidateDecisionMilliseconds": 618.8413999999866,
+        "candidateDecisions": 45,
+        "baselineDecisionMilliseconds": 8.406600000009348,
+        "baselineDecisions": 42
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:19",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 87,
+        "milliseconds": 664.8783000000003,
+        "candidateDecisionMilliseconds": 634.4125999999924,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 10.581200000000536,
+        "baselineDecisions": 45
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:19",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 89,
+        "milliseconds": 533.5796999999984,
+        "candidateDecisionMilliseconds": 504.68309999999474,
+        "candidateDecisions": 44,
+        "baselineDecisionMilliseconds": 9.333800000000338,
+        "baselineDecisions": 45
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:20",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 72,
+        "milliseconds": 431.52250000000276,
+        "candidateDecisionMilliseconds": 407.03869999999006,
+        "candidateDecisions": 36,
+        "baselineDecisionMilliseconds": 7.791999999986729,
+        "baselineDecisions": 36
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:20",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 72,
+        "milliseconds": 400.3279000000002,
+        "candidateDecisionMilliseconds": 377.38069999999425,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 7.516599999999016,
+        "baselineDecisions": 32
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:21",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 80,
+        "milliseconds": 512.9531000000025,
+        "candidateDecisionMilliseconds": 489.2887999999948,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 7.3353000000061,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:21",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 77,
+        "milliseconds": 386.306700000001,
+        "candidateDecisionMilliseconds": 365.13700000001336,
+        "candidateDecisions": 38,
+        "baselineDecisionMilliseconds": 6.96479999998337,
+        "baselineDecisions": 39
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:22",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "baseline",
+        "actions": 82,
+        "milliseconds": 789.6270999999979,
+        "candidateDecisionMilliseconds": 764.4178999999967,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 8.771300000000338,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:22",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 84,
+        "milliseconds": 537.1142,
+        "candidateDecisionMilliseconds": 512.5858999999946,
+        "candidateDecisions": 44,
+        "baselineDecisionMilliseconds": 9.09649999999965,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:23",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 82,
+        "milliseconds": 504.3156000000017,
+        "candidateDecisionMilliseconds": 480.83169999999154,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 7.270600000003469,
+        "baselineDecisions": 41
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:23",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 72,
+        "milliseconds": 389.22739999999976,
+        "candidateDecisionMilliseconds": 368.29279999999926,
+        "candidateDecisions": 38,
+        "baselineDecisionMilliseconds": 7.120799999996962,
+        "baselineDecisions": 34
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:24",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 92,
+        "milliseconds": 575.8273000000008,
+        "candidateDecisionMilliseconds": 548.7274999999972,
+        "candidateDecisions": 45,
+        "baselineDecisionMilliseconds": 8.797399999992194,
+        "baselineDecisions": 47
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:24",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 88,
+        "milliseconds": 468.23099999999977,
+        "candidateDecisionMilliseconds": 440.1080999999904,
+        "candidateDecisions": 42,
+        "baselineDecisionMilliseconds": 9.448799999983748,
+        "baselineDecisions": 46
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:25",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 82,
+        "milliseconds": 815.4527999999991,
+        "candidateDecisionMilliseconds": 791.1368000000075,
+        "candidateDecisions": 44,
+        "baselineDecisionMilliseconds": 7.499499999987165,
+        "baselineDecisions": 38
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:25",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 85,
+        "milliseconds": 742.9964,
+        "candidateDecisionMilliseconds": 717.2248999999902,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 9.04760000000897,
+        "baselineDecisions": 44
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:26",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 74,
+        "milliseconds": 377.27620000000024,
+        "candidateDecisionMilliseconds": 354.2970999999925,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 7.652200000015,
+        "baselineDecisions": 34
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:26",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 81,
+        "milliseconds": 565.6626999999971,
+        "candidateDecisionMilliseconds": 542.1554000000033,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 7.8448999999891385,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:27",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "baseline",
+        "actions": 95,
+        "milliseconds": 577.638600000002,
+        "candidateDecisionMilliseconds": 552.6081000000122,
+        "candidateDecisions": 45,
+        "baselineDecisionMilliseconds": 8.42849999999089,
+        "baselineDecisions": 50
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:27",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 89,
+        "milliseconds": 564.7837,
+        "candidateDecisionMilliseconds": 538.9102000000094,
+        "candidateDecisions": 47,
+        "baselineDecisionMilliseconds": 8.178700000004028,
+        "baselineDecisions": 42
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:28",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 78,
+        "milliseconds": 452.84330000000045,
+        "candidateDecisionMilliseconds": 429.8380000000034,
+        "candidateDecisions": 38,
+        "baselineDecisionMilliseconds": 8.51729999998497,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:28",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 83,
+        "milliseconds": 553.2917999999991,
+        "candidateDecisionMilliseconds": 530.4188000000177,
+        "candidateDecisions": 43,
+        "baselineDecisionMilliseconds": 7.602200000015728,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:29",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 86,
+        "milliseconds": 524.8153999999995,
+        "candidateDecisionMilliseconds": 499.54659999998694,
+        "candidateDecisions": 43,
+        "baselineDecisionMilliseconds": 8.517699999993056,
+        "baselineDecisions": 43
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:29",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "baseline",
+        "actions": 99,
+        "milliseconds": 646.0034999999989,
+        "candidateDecisionMilliseconds": 618.3675000000185,
+        "candidateDecisions": 46,
+        "baselineDecisionMilliseconds": 10.231099999979051,
+        "baselineDecisions": 53
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:30",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 80,
+        "milliseconds": 492.65090000000055,
+        "candidateDecisionMilliseconds": 470.2442999999985,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 8.278599999983271,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:30",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 81,
+        "milliseconds": 556.5838000000003,
+        "candidateDecisionMilliseconds": 536.2497999999978,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 6.550299999991694,
+        "baselineDecisions": 41
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:31",
+        "candidateSeat": 0,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 72,
+        "milliseconds": 453.2474000000002,
+        "candidateDecisionMilliseconds": 428.13709999999264,
+        "candidateDecisions": 35,
+        "baselineDecisionMilliseconds": 8.898699999987002,
+        "baselineDecisions": 37
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:31",
+        "candidateSeat": 1,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 82,
+        "milliseconds": 439.258600000001,
+        "candidateDecisionMilliseconds": 415.5592999999935,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 7.541799999973591,
+        "baselineDecisions": 42
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:32",
+        "candidateSeat": 0,
+        "candidateStarted": true,
+        "winner": "candidate",
+        "actions": 80,
+        "milliseconds": 534.2029999999977,
+        "candidateDecisionMilliseconds": 508.7628000000077,
+        "candidateDecisions": 40,
+        "baselineDecisionMilliseconds": 8.515999999992346,
+        "baselineDecisions": 40
+      },
+      {
+        "pairId": "duel-acceptance-v2:arena:32",
+        "candidateSeat": 1,
+        "candidateStarted": false,
+        "winner": "candidate",
+        "actions": 79,
+        "milliseconds": 425.3847999999998,
+        "candidateDecisionMilliseconds": 400.7250000000022,
+        "candidateDecisions": 41,
+        "baselineDecisionMilliseconds": 8.525800000006711,
+        "baselineDecisions": 38
+      }
+    ],
+    "summary": {
+      "pairs": 32,
+      "games": 64,
+      "wins": 54,
+      "losses": 10,
+      "unfinished": 0,
+      "completedWinRate": 0.84375,
+      "pairedScoreBounds": [
+        0.84375,
+        0.84375
+      ],
+      "pairedHoeffding95": [
+        0.6036693021700198,
+        1
+      ],
+      "candidateMeanDecisionMs": 11.474334519303547,
+      "baselineMeanDecisionMs": 0.19847174677603371,
+      "firstPlayer": {
+        "wins": 29,
+        "losses": 3,
+        "unfinished": 0
+      },
+      "secondPlayer": {
+        "wins": 25,
+        "losses": 7,
+        "unfinished": 0
+      }
+    }
+  },
+  "prediction": {
+    "requestedGames": 24,
+    "excluded": [],
+    "rows": [
+      {
+        "gameId": "duel-acceptance-v2:holdout:1",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.4166666666666667,
+          "interval": [
+            0.24467602609812147,
+            0.6116533413477077
+          ],
+          "wins": [
+            10,
+            14
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.4583333333333333,
+          "interval": [
+            0.278913337312114,
+            0.6492513464108005
+          ],
+          "wins": [
+            11,
+            13
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 277.775999999998,
+        "candidateMilliseconds": 13689.554800000005
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:2",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.9583333333333334,
+          "interval": [
+            0.7975819352134471,
+            0.9926065438344941
+          ],
+          "wins": [
+            23,
+            1
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.875,
+          "interval": [
+            0.6899611872950052,
+            0.9565566591987644
+          ],
+          "wins": [
+            21,
+            3
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 261.9904999999999,
+        "candidateMilliseconds": 8768.537099999994
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:3",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.625,
+          "interval": [
+            0.4270996244267478,
+            0.7884063244045088
+          ],
+          "wins": [
+            15,
+            9
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.5416666666666666,
+          "interval": [
+            0.3507486535891995,
+            0.721086662687886
+          ],
+          "wins": [
+            13,
+            11
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 230.73619999999937,
+        "candidateMilliseconds": 7880.027099999999
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:4",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.875,
+          "interval": [
+            0.6899611872950052,
+            0.9565566591987644
+          ],
+          "wins": [
+            21,
+            3
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.75,
+          "interval": [
+            0.5510055599484657,
+            0.8800063377140476
+          ],
+          "wins": [
+            18,
+            6
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 254.15490000000136,
+        "candidateMilliseconds": 9072.936499999996
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:5",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.6666666666666666,
+          "interval": [
+            0.46706316838132284,
+            0.8202780967270192
+          ],
+          "wins": [
+            16,
+            8
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.5833333333333334,
+          "interval": [
+            0.38834665865229256,
+            0.7553239739018786
+          ],
+          "wins": [
+            14,
+            10
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 289.88000000000466,
+        "candidateMilliseconds": 10713.524600000004
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:6",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.20833333333333334,
+          "interval": [
+            0.0924482535285206,
+            0.4047045325318807
+          ],
+          "wins": [
+            5,
+            19
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.16666666666666666,
+          "interval": [
+            0.0667867632863311,
+            0.35853070649698465
+          ],
+          "wins": [
+            4,
+            20
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 298.4215000000113,
+        "candidateMilliseconds": 9793.282500000001
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:7",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.625,
+          "interval": [
+            0.4270996244267478,
+            0.7884063244045088
+          ],
+          "wins": [
+            15,
+            9
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.5833333333333334,
+          "interval": [
+            0.38834665865229256,
+            0.7553239739018786
+          ],
+          "wins": [
+            14,
+            10
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 246.1149000000005,
+        "candidateMilliseconds": 10784.018499999991
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:8",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.16666666666666666,
+          "interval": [
+            0.0667867632863311,
+            0.35853070649698465
+          ],
+          "wins": [
+            4,
+            20
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.25,
+          "interval": [
+            0.11999366228595243,
+            0.4489944400515344
+          ],
+          "wins": [
+            6,
+            18
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 234.3914999999979,
+        "candidateMilliseconds": 8741.185700000002
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:9",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.375,
+          "interval": [
+            0.21159367559549125,
+            0.5729003755732521
+          ],
+          "wins": [
+            9,
+            15
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.625,
+          "interval": [
+            0.4270996244267478,
+            0.7884063244045088
+          ],
+          "wins": [
+            15,
+            9
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 279.9869000000035,
+        "candidateMilliseconds": 11481.463100000008
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:10",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.16666666666666666,
+          "interval": [
+            0.0667867632863311,
+            0.35853070649698465
+          ],
+          "wins": [
+            4,
+            20
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.25,
+          "interval": [
+            0.11999366228595243,
+            0.4489944400515344
+          ],
+          "wins": [
+            6,
+            18
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 227.45080000000598,
+        "candidateMilliseconds": 8669.355400000015
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:11",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.4583333333333333,
+          "interval": [
+            0.278913337312114,
+            0.6492513464108005
+          ],
+          "wins": [
+            11,
+            13
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.5416666666666666,
+          "interval": [
+            0.3507486535891995,
+            0.721086662687886
+          ],
+          "wins": [
+            13,
+            11
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 247.70530000000144,
+        "candidateMilliseconds": 10405.197599999985
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:12",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.2916666666666667,
+          "interval": [
+            0.14914648196961158,
+            0.4916769366449609
+          ],
+          "wins": [
+            7,
+            17
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.08333333333333333,
+          "interval": [
+            0.02315881529704407,
+            0.2584880219321007
+          ],
+          "wins": [
+            2,
+            22
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 261.11129999998957,
+        "candidateMilliseconds": 9729.411200000002
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:13",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.5416666666666666,
+          "interval": [
+            0.3507486535891995,
+            0.721086662687886
+          ],
+          "wins": [
+            13,
+            11
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.20833333333333334,
+          "interval": [
+            0.0924482535285206,
+            0.4047045325318807
+          ],
+          "wins": [
+            5,
+            19
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 310.2505999999994,
+        "candidateMilliseconds": 9340.835300000006
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:14",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 1,
+          "interval": [
+            0.8620237953250264,
+            1
+          ],
+          "wins": [
+            24,
+            0
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.7083333333333334,
+          "interval": [
+            0.5083230633550392,
+            0.8508535180303886
+          ],
+          "wins": [
+            17,
+            7
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 261.56319999997504,
+        "candidateMilliseconds": 10225.919699999999
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:15",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.75,
+          "interval": [
+            0.5510055599484657,
+            0.8800063377140476
+          ],
+          "wins": [
+            18,
+            6
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.7916666666666666,
+          "interval": [
+            0.5952954674681193,
+            0.9075517464714794
+          ],
+          "wins": [
+            19,
+            5
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 260.1851000000024,
+        "candidateMilliseconds": 10837.814699999988
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:16",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.5,
+          "interval": [
+            0.31427425819573795,
+            0.685725741804262
+          ],
+          "wins": [
+            12,
+            12
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.5416666666666666,
+          "interval": [
+            0.3507486535891995,
+            0.721086662687886
+          ],
+          "wins": [
+            13,
+            11
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 307.9161000000022,
+        "candidateMilliseconds": 9982.107799999998
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:17",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.3333333333333333,
+          "interval": [
+            0.17972190327298068,
+            0.5329368316186772
+          ],
+          "wins": [
+            8,
+            16
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.16666666666666666,
+          "interval": [
+            0.0667867632863311,
+            0.35853070649698465
+          ],
+          "wins": [
+            4,
+            20
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 285.51859999998123,
+        "candidateMilliseconds": 9448.849300000002
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:18",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.5,
+          "interval": [
+            0.31427425819573795,
+            0.685725741804262
+          ],
+          "wins": [
+            12,
+            12
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.16666666666666666,
+          "interval": [
+            0.0667867632863311,
+            0.35853070649698465
+          ],
+          "wins": [
+            4,
+            20
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 254.78659999999218,
+        "candidateMilliseconds": 8440.837999999989
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:19",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.8333333333333334,
+          "interval": [
+            0.6414692935030154,
+            0.9332132367136688
+          ],
+          "wins": [
+            20,
+            4
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.875,
+          "interval": [
+            0.6899611872950052,
+            0.9565566591987644
+          ],
+          "wins": [
+            21,
+            3
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 267.73769999999786,
+        "candidateMilliseconds": 9103.617599999998
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:20",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.625,
+          "interval": [
+            0.4270996244267478,
+            0.7884063244045088
+          ],
+          "wins": [
+            15,
+            9
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.5,
+          "interval": [
+            0.31427425819573795,
+            0.685725741804262
+          ],
+          "wins": [
+            12,
+            12
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 267.5734999999986,
+        "candidateMilliseconds": 9601.946499999991
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:21",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.4583333333333333,
+          "interval": [
+            0.278913337312114,
+            0.6492513464108005
+          ],
+          "wins": [
+            11,
+            13
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.625,
+          "interval": [
+            0.4270996244267478,
+            0.7884063244045088
+          ],
+          "wins": [
+            15,
+            9
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 285.7234999999928,
+        "candidateMilliseconds": 10718.240099999995
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:22",
+        "ply": 35,
+        "outcome": 1,
+        "baseline": {
+          "probability": 0.3333333333333333,
+          "interval": [
+            0.17972190327298068,
+            0.5329368316186772
+          ],
+          "wins": [
+            8,
+            16
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.2916666666666667,
+          "interval": [
+            0.14914648196961158,
+            0.4916769366449609
+          ],
+          "wins": [
+            7,
+            17
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 284.1785999999847,
+        "candidateMilliseconds": 8752.676099999982
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:23",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.20833333333333334,
+          "interval": [
+            0.0924482535285206,
+            0.4047045325318807
+          ],
+          "wins": [
+            5,
+            19
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.125,
+          "interval": [
+            0.043443340801235575,
+            0.31003881270499467
+          ],
+          "wins": [
+            3,
+            21
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 298.85270000001765,
+        "candidateMilliseconds": 8924.573200000013
+      },
+      {
+        "gameId": "duel-acceptance-v2:holdout:24",
+        "ply": 35,
+        "outcome": 0,
+        "baseline": {
+          "probability": 0.625,
+          "interval": [
+            0.4270996244267478,
+            0.7884063244045088
+          ],
+          "wins": [
+            15,
+            9
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "candidate": {
+          "probability": 0.4583333333333333,
+          "interval": [
+            0.278913337312114,
+            0.6492513464108005
+          ],
+          "wins": [
+            11,
+            13
+          ],
+          "completed": 24,
+          "unfinished": 0,
+          "requested": 24,
+          "terminal": false
+        },
+        "baselineMilliseconds": 286.1329999999725,
+        "candidateMilliseconds": 10261.330599999987
+      }
+    ],
+    "allAvailable": {
+      "baseline": {
+        "total": 24,
+        "evaluated": 24,
+        "abstained": 0,
+        "games": 24,
+        "brier": 0.222583912037037,
+        "logLoss": 0.617808960079434,
+        "accuracyAtHalf": 0.5416666666666666,
+        "expectedCalibrationError": 0.16493055555555555,
+        "calibration": [
+          {
+            "lower": 0,
+            "upper": 0.2,
+            "count": 2,
+            "weight": 2,
+            "meanPrediction": 0.16666666666666666,
+            "observedRate": 0
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.4,
+            "count": 6,
+            "weight": 6,
+            "meanPrediction": 0.29166666666666663,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.6,
+            "count": 6,
+            "weight": 6,
+            "meanPrediction": 0.4791666666666667,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.8,
+            "count": 6,
+            "weight": 6,
+            "meanPrediction": 0.6527777777777778,
+            "observedRate": 0.3333333333333333
+          },
+          {
+            "lower": 0.8,
+            "upper": 1,
+            "count": 4,
+            "weight": 4,
+            "meanPrediction": 0.9166666666666667,
+            "observedRate": 1
+          }
+        ]
+      },
+      "candidate": {
+        "total": 24,
+        "evaluated": 24,
+        "abstained": 0,
+        "games": 24,
+        "brier": 0.22265625,
+        "logLoss": 0.6324727580462054,
+        "accuracyAtHalf": 0.625,
+        "expectedCalibrationError": 0.09374999999999999,
+        "calibration": [
+          {
+            "lower": 0,
+            "upper": 0.2,
+            "count": 5,
+            "weight": 5,
+            "meanPrediction": 0.14166666666666666,
+            "observedRate": 0.2
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.4,
+            "count": 4,
+            "weight": 4,
+            "meanPrediction": 0.25,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.6,
+            "count": 8,
+            "weight": 8,
+            "meanPrediction": 0.5260416666666666,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.8,
+            "count": 5,
+            "weight": 5,
+            "meanPrediction": 0.7,
+            "observedRate": 0.6
+          },
+          {
+            "lower": 0.8,
+            "upper": 1,
+            "count": 2,
+            "weight": 2,
+            "meanPrediction": 0.875,
+            "observedRate": 1
+          }
+        ]
+      }
+    },
+    "commonCoverage": {
+      "games": 24,
+      "baseline": {
+        "total": 24,
+        "evaluated": 24,
+        "abstained": 0,
+        "games": 24,
+        "brier": 0.222583912037037,
+        "logLoss": 0.617808960079434,
+        "accuracyAtHalf": 0.5416666666666666,
+        "expectedCalibrationError": 0.16493055555555555,
+        "calibration": [
+          {
+            "lower": 0,
+            "upper": 0.2,
+            "count": 2,
+            "weight": 2,
+            "meanPrediction": 0.16666666666666666,
+            "observedRate": 0
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.4,
+            "count": 6,
+            "weight": 6,
+            "meanPrediction": 0.29166666666666663,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.6,
+            "count": 6,
+            "weight": 6,
+            "meanPrediction": 0.4791666666666667,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.8,
+            "count": 6,
+            "weight": 6,
+            "meanPrediction": 0.6527777777777778,
+            "observedRate": 0.3333333333333333
+          },
+          {
+            "lower": 0.8,
+            "upper": 1,
+            "count": 4,
+            "weight": 4,
+            "meanPrediction": 0.9166666666666667,
+            "observedRate": 1
+          }
+        ]
+      },
+      "candidate": {
+        "total": 24,
+        "evaluated": 24,
+        "abstained": 0,
+        "games": 24,
+        "brier": 0.22265625,
+        "logLoss": 0.6324727580462054,
+        "accuracyAtHalf": 0.625,
+        "expectedCalibrationError": 0.09374999999999999,
+        "calibration": [
+          {
+            "lower": 0,
+            "upper": 0.2,
+            "count": 5,
+            "weight": 5,
+            "meanPrediction": 0.14166666666666666,
+            "observedRate": 0.2
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.4,
+            "count": 4,
+            "weight": 4,
+            "meanPrediction": 0.25,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.6,
+            "count": 8,
+            "weight": 8,
+            "meanPrediction": 0.5260416666666666,
+            "observedRate": 0.5
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.8,
+            "count": 5,
+            "weight": 5,
+            "meanPrediction": 0.7,
+            "observedRate": 0.6
+          },
+          {
+            "lower": 0.8,
+            "upper": 1,
+            "count": 2,
+            "weight": 2,
+            "meanPrediction": 0.875,
+            "observedRate": 1
+          }
+        ]
+      }
+    }
+  },
+  "samplingDispersion": {
+    "gameId": "duel-acceptance-v2:holdout:1",
+    "repeats": 2,
+    "baseline": {
+      "count": 2,
+      "mean": 0.3958333333333333,
+      "sampleSd": 0.08838834764831845,
+      "minimum": 0.3333333333333333,
+      "maximum": 0.4583333333333333
+    },
+    "candidate": {
+      "count": 2,
+      "mean": 0.5833333333333334,
+      "sampleSd": 0,
+      "minimum": 0.5833333333333334,
+      "maximum": 0.5833333333333334
+    }
+  },
+  "elapsedMilliseconds": 299449.1214
+}

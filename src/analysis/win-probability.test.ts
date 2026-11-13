@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getJewel } from '../game/catalog';
 import { applyAction, createGame, getDiscountedCost, getLegalActions, validateState } from '../game/engine';
 import { COST_COLORS, LEVELS, type GameState, type GemColor } from '../game/types';
-import { chooseSimulationAction, estimateWinProbability, positionSeed, randomizeFuture, runPlayout, summarizeEstimate, type AnalysisCommand, type AnalysisResponse } from './win-probability';
+import { chooseSimulationAction, estimateWinProbability, positionSeed, randomizeFuture, runPlayout, summarizeEstimate } from './win-probability';
 
 function detach(state: GameState, id: string) {
   for (const level of LEVELS) {
@@ -119,22 +119,4 @@ describe('Monte Carlo position evaluation', () => {
     expect(runPlayout(state, 1347)).toEqual(runPlayout(state, 1347));
   }, 30000);
 
-  it('reports each worker point and stops a cancelled job before posting stale results', async () => {
-    const scope: { onmessage: ((event: MessageEvent<AnalysisCommand>) => Promise<void>) | null } = { onmessage: null };
-    const messages: AnalysisResponse[] = [];
-    vi.stubGlobal('self', scope); vi.stubGlobal('postMessage', (message: AnalysisResponse) => messages.push(message));
-    try {
-      await import('./analysis.worker');
-      const terminal = createGame('worker-end'); terminal.phase = 'gameOver'; terminal.winner = 0;
-      const send = (data: AnalysisCommand) => scope.onmessage!({ data } as MessageEvent<AnalysisCommand>);
-      await send({ type: 'analyze', id: 'complete', states: [createGame('worker-start'), terminal], options: { samples: 1, maxActions: 1 } });
-      expect(messages.map(message => message.type)).toEqual(['point', 'point', 'done']);
-      expect(messages[0]).toMatchObject({ id: 'complete', index: 0, estimate: { probability: null, unfinished: 1 } });
-      expect(messages[1]).toMatchObject({ id: 'complete', index: 1, estimate: { probability: 1, terminal: true } });
-      messages.length = 0;
-      const pending = send({ type: 'analyze', id: 'cancelled', states: [createGame('worker-cancel')], options: { samples: 24, maxActions: 1 } });
-      await send({ type: 'cancel', id: 'cancelled' }); await pending;
-      expect(messages).toEqual([]);
-    } finally { vi.unstubAllGlobals(); }
-  });
 });

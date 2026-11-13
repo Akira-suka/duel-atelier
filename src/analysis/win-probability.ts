@@ -15,13 +15,6 @@ export interface WinEstimate {
   terminal: boolean;
 }
 export interface PlayoutResult { winner: PlayerId | null; actions: number }
-export interface AnalysisRequest { type: 'analyze'; id: string; states: GameState[]; options?: AnalysisOptions }
-export type AnalysisCommand = AnalysisRequest | { type: 'cancel'; id: string };
-export type AnalysisResponse =
-  | { type: 'point'; id: string; index: number; estimate: WinEstimate }
-  | { type: 'done'; id: string }
-  | { type: 'error'; id: string; message: string };
-
 export function analysisSettings(options: AnalysisOptions = {}) {
   const limit = (value: number | undefined, fallback: number, maximum: number) => Number.isFinite(value) ? Math.max(1, Math.min(maximum, Math.floor(value!))) : fallback;
   return { samples: limit(options.samples, 24, 128), maxActions: limit(options.maxActions, 600, 2000), seed: (options.seed ?? 0x5eeda11) >>> 0 };
@@ -198,6 +191,21 @@ export function chooseSimulationAction(state: GameState, random: () => number): 
     if (score > bestScore) { bestScore = score; chosen = action; }
   }
   return chosen;
+}
+
+/** Search prior only. The frozen baseline chooser/estimator above remain unchanged. */
+export function policyPriors(state: GameState, actions: Action[], temperature = 2.5): number[] {
+  const ctx = context(state);
+  const potential = walletPotential(ctx.targets, ctx.wallet);
+  const scores = actions.map(action => scoreAction(state, action, ctx, potential));
+  const best = Math.max(...scores);
+  return scores.map(score => Math.exp(Math.max(-50, (score - best) / temperature)));
+}
+
+/** Handwritten resource potential for a search leaf, never a calibrated probability. */
+export function resourcePotential(state: GameState, player: PlayerId): number {
+  const ctx = context(state.turn === player ? state : { ...state, turn: player });
+  return walletPotential(ctx.targets, ctx.wallet);
 }
 
 export function runPlayout(position: GameState, seed: number, maxActions = 600): PlayoutResult {
