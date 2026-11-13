@@ -11,14 +11,23 @@ protected expression is granted. This is an unofficial educational project,
 not an endorsed product. A copyright notice or a noncommercial intention does
 not independently establish permission for third-party material.
 
-Local private themes and environment files are excluded from Git and release
-archives. In this workspace that includes `src/theme/local/` and
-`public/art/eva/`. Do not use `git add -f` on them or upload a local build
-containing them. Public release builds must be made from a clean tracked export.
+Local themes and environment files are excluded from Git. The default source and
+web packages are built from a clean tracked export and contain the original
+geometric theme only. Do not include `.env` files or private game saves in releases.
+
+At the project owner's request, v0.3.0 also provides a separate optional EVA theme
+attachment. It contains project-generated, unofficial AI fan-art compositions and
+their presentation adapter, not official screenshots or extracted commercial art.
+This attachment is **outside the repository's MIT artwork grant**: no license to
+Evangelion characters, mecha designs, names or other third-party rights is granted.
+Free availability is not a promise of clearance for commercial use, redistribution
+or game distribution under the franchise's fan-work guideline. Keep this notice
+with the optional theme. No official affiliation or endorsement is claimed.
 
 The public project uses MIT, which allows commercial use of licensed code.
 Do not describe it as a "noncommercial-only open-source license".
-Third-party assets must be replaced or separately authorized for any distribution.
+For further distribution, assess the rights of any optional third-party-themed
+material separately from the MIT software.
 
 Reference sources, checked 2026-11-13:
 - MIT: https://choosealicense.com/licenses/mit/

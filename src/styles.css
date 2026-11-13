@@ -214,3 +214,16 @@ button svg { pointer-events: none; }
 .new-game-modal p { font-size: 12px; color: #bdab90; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+.history-modal { max-width: 720px; }
+.history-caption { color: #c2b394; font-size: 13px; line-height: 1.7; }
+.history-list { list-style: none; margin: 0; padding: 0; }
+.history-list li { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 18px 0; border-bottom: 1px solid #77819b44; }
+.history-list li:last-child { border-bottom: 0; }
+.history-list li > div:first-child { display: grid; gap: 5px; }
+.history-list strong { color: #ecd6ad; font-size: 16px; }
+.history-list span { color: #c7cfdd; font-size: 13px; }
+.history-list small { color: #98a4b8; font-size: 11px; }
+.history-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.archive-save-warning { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 1100; padding: 9px 16px; border: 1px solid #bba26c; background: #2e231d; color: #ffe0a1; font-size: 12px; }
+.archive-save-warning button { margin-left: 12px; padding: 5px 10px; border: 1px solid #bba26c; border-radius: 3px; color: #ffe0a1; background: #4a3926; }

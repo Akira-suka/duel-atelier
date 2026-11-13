@@ -6,9 +6,9 @@ let activeId: string | null = null;
 let session: ProgressiveAnalysis | null = null;
 let running = false;
 const send = (message: ProgressiveResponse) => postMessage(message);
-const yieldToMessages = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+const yieldToMessages = (delay = 0) => new Promise<void>(resolve => setTimeout(resolve, delay));
 
-async function pump(job: number, id: string, analysis: ProgressiveAnalysis, initial: boolean) {
+async function pump(job: number, id: string, analysis: ProgressiveAnalysis, initial: boolean, restRatio = 0) {
   running = true;
   try {
     await yieldToMessages();
@@ -18,10 +18,13 @@ async function pump(job: number, id: string, analysis: ProgressiveAnalysis, init
       if (job !== generation) return;
       const index = analysis.next();
       if (index < 0) { send({ type: 'done', id }); return; }
+      const started = performance.now();
       const estimate = analysis.advance(index);
+      const elapsed = performance.now() - started;
       await yieldToMessages();
       if (job !== generation) return;
       send({ type: 'point', id, index, estimate });
+      if (restRatio) await yieldToMessages(Math.min(30000, Math.max(30, elapsed)) * restRatio);
     }
   } catch (error) {
     if (job === generation) send({ type: 'error', id, message: error instanceof Error ? error.message : '本地模拟失败' });
@@ -44,5 +47,5 @@ self.onmessage = async (event: MessageEvent<ProgressiveCommand>) => {
   activeId = message.id;
   session = new ProgressiveAnalysis(message.states, message.resume, message.options, message.method);
   session.prioritize(message.focus ?? -1);
-  await pump(job, message.id, session, true);
+  await pump(job, message.id, session, true, Number.isFinite(message.restRatio) ? Math.max(0, Math.min(2, message.restRatio!)) : 0);
 };

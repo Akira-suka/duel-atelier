@@ -6,7 +6,7 @@ export const STANDARD_SAMPLES = 24;
 export const DEEP_SAMPLES = 64;
 export type AnalysisMethod = 'baseline' | 'search';
 export type ProgressiveCommand =
-  | { type: 'analyze'; id: string; states: GameState[]; method?: AnalysisMethod; resume?: (WinEstimate | undefined)[]; focus?: number; options?: AnalysisOptions }
+  | { type: 'analyze'; id: string; states: GameState[]; method?: AnalysisMethod; resume?: (WinEstimate | undefined)[]; focus?: number; options?: AnalysisOptions; restRatio?: number }
   | { type: 'focus'; id: string; index: number; deep?: boolean }
   | { type: 'cancel'; id: string };
 export type ProgressiveResponse =

@@ -1,0 +1,25 @@
+{
+  "scope": "Node worker JavaScript heap sampled after each completed playout, not whole-browser or absolute transient peak",
+  "method": "search",
+  "samples": 24,
+  "restRatio": 1,
+  "elapsedSeconds": 23.1781151,
+  "firstHeapMiB": 10.714248657226562,
+  "sampledMaxHeapMiB": 29.408241271972656,
+  "points": 24,
+  "estimate": {
+    "probability": 0.5,
+    "interval": [
+      0.31427425819573795,
+      0.685725741804262
+    ],
+    "wins": [
+      12,
+      12
+    ],
+    "completed": 24,
+    "unfinished": 0,
+    "requested": 24,
+    "terminal": false
+  }
+}

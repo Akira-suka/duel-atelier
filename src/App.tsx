@@ -3,7 +3,8 @@ import {
   applyAction, canBuy, countTokens, createGame, emptyWallet, getDiscountedCost,
   getLegalActions, getPayment, getStats,
 } from './game/engine';
-import { createMatch, parseMatch, serializeMatch, replayMatch, MAX_MATCH_ACTIONS, MAX_MATCH_BYTES, type MatchRecord } from './game/match';
+import { createMatch, parseMatch, serializeMatch, MAX_MATCH_ACTIONS, MAX_MATCH_BYTES, type MatchRecord } from './game/match';
+import { ReplayWindow } from './game/replay-window';
 import { getJewel, getRoyal } from './game/catalog';
 import {
   COST_COLORS, GEM_COLORS, TOKEN_COLORS,
@@ -14,8 +15,11 @@ import { Gem, Token, Scroll, Card, Royal, Portrait, Crown } from './ui/TablePiec
 import { DECKS, RESOURCE_NAMES as COLOR_NAMES, themedLog, themedText } from './theme';
 import { useTableMotion } from './ui/useTableMotion';
 import { ReplayPanel } from './ui/ReplayPanel';
+import { useMatchAnalysis } from './analysis/useMatchAnalysis';
+import { SAVE_KEY, useMatchPersistence } from './analysis/useMatchPersistence';
+import { listArchivedMatches, type ArchivedMatch } from './game/archive';
+import { ArchivedReplay } from './ui/ArchivedReplay';
 
-const SAVE_KEY = 'splendor-duel.local.v1';
 const DEFAULT_PLAYER_NAMES: [string, string] = ['Asuka', 'Sinji'];
 type Mode = 'take' | 'buy' | 'reserve' | 'privilege';
 type CardTarget = { id: string; source: CardSource };
@@ -32,7 +36,7 @@ function renameMatch(restored: { record: MatchRecord; game: GameState }) {
   const initial = updateDefaultNames(record.initial);
   if (initial.players.every((player, index) => player.name === record.initial.players[index].name)) return restored;
   const renamed = { ...record, initial };
-  return { record: renamed, game: replayMatch(renamed).at(-1)! };
+  return { record: renamed, game: new ReplayWindow(renamed).get(renamed.actions.length) };
 }
 
 function loadMatch(): { record: MatchRecord; game: GameState } {
@@ -77,8 +81,10 @@ export default function App() {
   const [logOpen, setLogOpen] = useState(false);
   const [newGameOpen, setNewGameOpen] = useState(false);
   const [replayOpen, setReplayOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<ArchivedMatch[]>([]);
+  const [archived, setArchived] = useState<ArchivedMatch | null>(null);
   const [names, setNames] = useState<[string, string]>([game.players[0].name, game.players[1].name]);
-  const [saveFailed, setSaveFailed] = useState(false);
   const [tableScale, setTableScale] = useState(() => Math.min(window.innerWidth / 1600, window.innerHeight / 900));
   const [fullscreen, setFullscreen] = useState(() => !!document.fullscreenElement);
   const motion = useTableMotion();
@@ -88,6 +94,10 @@ export default function App() {
   const [visualPlayer, setVisualPlayer] = useState<PlayerId | null>(null);
   const displayTurn = visualPlayer ?? game.turn;
   const inputLocked = motion.busy || visualPlayer !== null;
+  const [precompute, setPrecompute] = useState(true);
+  const analysis = useMatchAnalysis(record, game, precompute && !archived, inputLocked || !!archived);
+  const persistence = useMatchPersistence(record, game, analysis);
+  const saveFailed = persistence.failed;
 
   const current = game.players[displayTurn];
   const legal = useMemo(() => getLegalActions(game), [game]);
@@ -105,11 +115,6 @@ export default function App() {
     indices.length === 3 && indices.every(index => game.board[index] === game.board[indices[0]])
     || indices.filter(index => game.board[index] === 'pearl').length === 2
   );
-
-  useEffect(() => {
-    try { localStorage.setItem(SAVE_KEY, serializeMatch(record)); setSaveFailed(false); }
-    catch { setSaveFailed(true); }
-  }, [record]);
 
   useEffect(() => () => { transitionId.current++; }, []);
 
@@ -129,7 +134,7 @@ export default function App() {
     function onEscape(event: KeyboardEvent) {
       if (event.key !== 'Escape') return;
       setReserveOpen(false); setCollection(null); setLogOpen(false); setNewGameOpen(false);
-      setMenuOpen(false); setPaymentOpen(false); setReplayOpen(false);
+      setMenuOpen(false); setPaymentOpen(false); setReplayOpen(false); setHistoryOpen(false);
     }
     window.addEventListener('keydown', onEscape);
     return () => window.removeEventListener('keydown', onEscape);
@@ -158,7 +163,7 @@ export default function App() {
     }
     document.addEventListener('keydown', trapFocus);
     return () => { cancelAnimationFrame(frame); document.removeEventListener('keydown', trapFocus); previousFocus?.focus(); };
-  }, [handoff, game.phase, reserveOpen, collection, logOpen, newGameOpen]);
+  }, [handoff, game.phase, reserveOpen, collection, logOpen, newGameOpen, historyOpen]);
 
   function clearSelection(nextMode: Mode = 'take') {
     setMode(nextMode); setIndices([]); setGoldIndex(null); setTarget(null);
@@ -258,6 +263,7 @@ export default function App() {
   }
 
   function startNewGame() {
+    persistence.flush();
     transitionId.current++; motion.cancel(); playLock.current = false; setVisualPlayer(null);
     const cleaned: [string, string] = [names[0].trim() || DEFAULT_PLAYER_NAMES[0], names[1].trim() || DEFAULT_PLAYER_NAMES[1]];
     const next = createGame(undefined, cleaned);
@@ -266,11 +272,37 @@ export default function App() {
   }
 
   function downloadSave() {
-    const blob = new Blob([serializeMatch(record)], { type: 'application/json' });
+    persistence.flush();
+    downloadRecord(analysis.snapshot(record)); setMenuOpen(false);
+  }
+
+  function downloadRecord(saved: MatchRecord, filename = 'splendor-duel-save.json') {
+    const blob = new Blob([serializeMatch(saved)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
-    anchor.href = url; anchor.download = 'splendor-duel-save.json'; anchor.click();
-    URL.revokeObjectURL(url); setMenuOpen(false);
+    anchor.href = url; anchor.download = filename; anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function openHistory() {
+    persistence.flush();
+    try { setHistory(listArchivedMatches(localStorage)); } catch { setHistory([]); }
+    setHistoryOpen(true); setMenuOpen(false);
+  }
+
+  function viewArchived(item: ArchivedMatch) {
+    if (JSON.stringify(item.record.initial) === JSON.stringify(record.initial)
+      && JSON.stringify(item.record.actions) === JSON.stringify(record.actions)) {
+      setHistoryOpen(false); setReplayOpen(true); return;
+    }
+    persistence.flush(); analysis.setView(null); analysis.setActivity(false, true, false); analysis.suspend();
+    setReplayOpen(false); setHistoryOpen(false); setArchived(item);
+  }
+
+  function closeArchived() {
+    setArchived(null);
+    try { setHistory(listArchivedMatches(localStorage)); } catch { setHistory([]); }
+    setHistoryOpen(true);
   }
 
   async function toggleFullscreen() {
@@ -290,6 +322,7 @@ export default function App() {
       if (requestId !== importRequestId.current || startingTransition !== transitionId.current) return;
       const restored = parseMatch(text);
       if (!restored) { setError('存档无效，当前对局未更改'); return; }
+      persistence.flush();
       transitionId.current++; motion.cancel(); playLock.current = false; setVisualPlayer(null);
       const renamed = renameMatch(restored);
       setMatch(renamed); setNames([renamed.game.players[0].name, renamed.game.players[1].name]); setReplayOpen(false);
@@ -350,9 +383,9 @@ export default function App() {
     return <><div className="selected-tokens">{indices.map(index => <Gem key={index} color={game.board[index]!} small />)}</div>{indices.length > 0 && <button type="button" className="secondary-button" onClick={() => clearSelection()}>取消</button>}<button type="button" className="primary-button" disabled={!validTake || handoff} onClick={() => play({ type: 'takeTokens', indices })}>确认拿取{indices.length ? ` ${indices.length}` : ''}</button></>;
   }
 
-  return <div className="table-viewport"><div className={`game-table${handoff && game.phase !== 'gameOver' ? ' is-handoff' : ''}${inputLocked ? ' is-animating' : ''}`} inert={inputLocked || replayOpen} aria-hidden={replayOpen || undefined} aria-busy={inputLocked} style={{ transform: `translate(-50%, -50%) scale(${tableScale})` }}>
+  return <div className="table-viewport"><div className={`game-table${handoff && game.phase !== 'gameOver' ? ' is-handoff' : ''}${inputLocked ? ' is-animating' : ''}`} inert={inputLocked || replayOpen || !!archived} aria-hidden={replayOpen || !!archived || undefined} aria-busy={inputLocked} style={{ transform: `translate(-50%, -50%) scale(${tableScale})` }}>
     <div className="table-menu"><span className="table-turn">{game.turnNumber}</span><button type="button" className="menu-toggle fullscreen-toggle" aria-label="全屏" aria-pressed={fullscreen} title={fullscreen ? '退出全屏' : '进入全屏'} onClick={() => { void toggleFullscreen(); }}>⛶</button><button type="button" className="menu-toggle" aria-label="对局菜单" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
-      {menuOpen && <div className="menu-popover"><button type="button" onClick={() => { setNewGameOpen(true); setMenuOpen(false); }}>新对局</button><button type="button" onClick={() => { setLogOpen(true); setMenuOpen(false); }}>行动记录</button><button type="button" onClick={downloadSave}>导出存档</button><label className="import-button">导入存档<input type="file" accept=".json,application/json" onChange={event => { void importSave(event.target.files?.[0]); event.target.value = ''; }} /></label><small className={saveFailed ? 'save-warning' : 'save-status'}>{saveFailed ? '请导出保存' : '已保存'}</small></div>}
+      {menuOpen && <div className="menu-popover"><button type="button" onClick={() => { setNewGameOpen(true); setMenuOpen(false); }}>新对局</button><button type="button" onClick={() => { setLogOpen(true); setMenuOpen(false); }}>行动记录</button><button type="button" aria-pressed={precompute} onClick={() => setPrecompute(value => !value)}>后台预计算：{precompute ? '开' : '关'}</button><button type="button" onClick={openHistory}>历史对局</button><button type="button" onClick={downloadSave}>导出存档</button><label className="import-button">导入存档<input type="file" accept=".json,application/json" onChange={event => { void importSave(event.target.files?.[0]); event.target.value = ''; }} /></label><small className={saveFailed ? 'save-warning' : 'save-status'}>{saveFailed ? '请导出保存' : '已保存'}</small></div>}
     </div>
 
     <aside className="player-rail">{renderPlayer(0)}{renderPlayer(1)}</aside>
@@ -403,8 +436,19 @@ export default function App() {
 
     {logOpen && <Modal title="行动记录" className="log-modal" onClose={() => setLogOpen(false)}><ol className="game-log">{game.log.map((entry, index) => <li key={index}>{themedLog(entry, game.players.map(player => player.name))}</li>)}</ol></Modal>}
 
-    {newGameOpen && <Modal title="新对局" className="new-game-modal" onClose={() => setNewGameOpen(false)}><label>{DEFAULT_PLAYER_NAMES[0]}<input maxLength={20} value={names[0]} onChange={event => setNames([event.target.value, names[1]])} /></label><label>{DEFAULT_PLAYER_NAMES[1]}<input maxLength={20} value={names[1]} onChange={event => setNames([names[0], event.target.value])} /></label><p>将替换当前对局。</p><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setNewGameOpen(false)}>取消</button><button type="button" className="primary-button" onClick={startNewGame}>开始</button></div></Modal>}
+    {historyOpen && <Modal title="历史对局" className="history-modal" onClose={() => setHistoryOpen(false)}>
+      <p className="history-caption">保留最近 5 局已结束对局，查看回放不会替换当前对局。</p>
+      {history.length ? <ol className="history-list">{history.map(item => <li key={item.id}>
+        <div><strong>{item.game.players[0].name} · {item.game.players[1].name}</strong>
+          <span>{item.game.players[item.game.winner!].name} 获胜 · {item.record.actions.length} 步</span>
+          <small>保存于 {new Date(item.savedAt).toLocaleString('zh-CN')}</small></div>
+        <div className="history-actions"><button type="button" className="primary-button" onClick={() => viewArchived(item)}>查看回放</button>
+          <button type="button" className="secondary-button" onClick={() => downloadRecord(item.record, `duel-history-${item.id}.json`)}>导出</button></div>
+      </li>)}</ol> : <p className="empty-message">暂无已归档对局。此前已被覆盖且没有导出的记录无法恢复。</p>}
+    </Modal>}
+
+    {newGameOpen && <Modal title="新对局" className="new-game-modal" onClose={() => setNewGameOpen(false)}><label>{DEFAULT_PLAYER_NAMES[0]}<input maxLength={20} value={names[0]} onChange={event => setNames([event.target.value, names[1]])} /></label><label>{DEFAULT_PLAYER_NAMES[1]}<input maxLength={20} value={names[1]} onChange={event => setNames([names[0], event.target.value])} /></label><p>已结束对局保留在历史记录中；正在进行的对局将被替换。</p><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setNewGameOpen(false)}>取消</button><button type="button" className="primary-button" onClick={startNewGame}>开始</button></div></Modal>}
 
     {!inputLocked && game.phase === 'gameOver' && game.winner !== null && <div className="victory-banner" role="status"><Crown /><strong>{game.players[game.winner].name} 获胜</strong><span>{game.victoryReasons.map(reason => ({ prestige: '20 声望', crowns: '10 王冠', color: '10 同色声望' })[reason]).join(' · ')}</span><button type="button" onClick={() => setNewGameOpen(true)}>再来一局</button></div>}
-  </div>{replayOpen && game.phase === 'gameOver' && <ReplayPanel record={record} onClose={() => setReplayOpen(false)} />}</div>;
+  </div>{replayOpen && game.phase === 'gameOver' && <ReplayPanel record={record} analysis={analysis} onClose={() => setReplayOpen(false)} />}{archived && <ArchivedReplay key={archived.id} item={archived} onClose={closeArchived} />}</div>;
 }

@@ -1,4 +1,5 @@
 import { applyAction, parseSave } from './engine';
+import { parseSavedAnalysis, type SavedAnalysis } from './analysis-save';
 import { COST_COLORS, GEM_COLORS, TOKEN_COLORS, type Action, type GameState } from './types';
 
 export const MATCH_FORMAT = 'splendor-duel-match';
@@ -9,6 +10,7 @@ export interface MatchRecord {
   version: 1;
   initial: GameState;
   actions: Action[];
+  analysis?: SavedAnalysis;
 }
 
 export interface LoadedMatch {
@@ -68,7 +70,7 @@ function initialState(value: unknown): GameState {
 }
 
 function recordShape(value: unknown): asserts value is MatchRecord {
-  if (!object(value) || !keys(value, ['version', 'initial', 'actions']) || value.version !== 1
+  if (!object(value) || !keys(value, ['version', 'initial', 'actions'], ['analysis']) || value.version !== 1
     || !Array.isArray(value.actions) || value.actions.length > MAX_MATCH_ACTIONS || !value.actions.every(action)) {
     throw new Error('对局记录格式无效或动作数量超过上限。');
   }
@@ -105,7 +107,9 @@ export function replayMatch(record: MatchRecord): GameState[] {
 /** The caller records only successful applyAction transitions; saving does not replay. */
 export function serializeMatch(record: MatchRecord): string {
   recordShape(record);
-  const text = JSON.stringify({ format: MATCH_FORMAT, ...record, actionCount: record.actions.length });
+  const { analysis, ...core } = record;
+  const saved = parseSavedAnalysis(analysis, record.actions.length);
+  const text = JSON.stringify({ format: MATCH_FORMAT, ...core, ...(saved ? { analysis: saved } : {}), actionCount: record.actions.length });
   if (text.length > MAX_MATCH_BYTES || new TextEncoder().encode(text).length > MAX_MATCH_BYTES) {
     throw new Error('对局记录超过存档大小上限。');
   }
@@ -121,12 +125,13 @@ export function parseMatch(text: string): LoadedMatch | null {
       const game = parseSave(text);
       return game ? { record: createMatch(game), game } : null;
     }
-    if (value.format !== MATCH_FORMAT || !keys(value, ['format', 'version', 'initial', 'actions', 'actionCount'])
+    if (value.format !== MATCH_FORMAT || !keys(value, ['format', 'version', 'initial', 'actions', 'actionCount'], ['analysis'])
       || !integer(value.actionCount, MAX_MATCH_ACTIONS) || !Array.isArray(value.actions)
       || value.actionCount !== value.actions.length) return null;
     const record = { version: value.version, initial: value.initial, actions: value.actions };
     recordShape(record);
     const game = reconstruct(record);
-    return { record, game };
+    const analysis = parseSavedAnalysis(value.analysis, record.actions.length);
+    return { record: analysis ? { ...record, analysis } : record, game };
   } catch { return null; }
 }
