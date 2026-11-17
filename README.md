@@ -40,7 +40,8 @@ Windows 下载源码、安装 Node.js 24+ 后，双击 `host-friends.cmd`：
 2. 房主打开终端显示的本机地址并创建房间。
 3. 将终端显示的临时 HTTPS 网址和网页里的邀请码一起发给朋友。
 
-同一网络可选「LAN only」。命令行对应 `npm run host:public` / `npm run host:lan`（先 `npm ci`、`npm run build`）。
+同一网络可选「LAN only」；Cloudflare 无法连接时选「Public invite via SSH」，使用系统 OpenSSH 客户端连接备用免费隧道。
+命令行对应 `npm run host:public` / `npm run host:lan` / `npm run host:ssh`（先 `npm ci`、`npm run build`）。
 房主保持电脑和窗口运行；停止后临时网址失效，下次开服通常会换网址。继续旧局前请双方保存「重连凭证」。
 Quick Tunnel 是第三方临时服务，网络可达性与稳定性不保证；局域网方式不依赖它。
 保留原有同机模式。支持断线重连、主机重启恢复、SQLite 存档；完整回放仅在终局开放。
@@ -104,7 +105,7 @@ v0.3.0 Release 另提供可选 `eva-theme.zip`：75 张本项目生成的非官�
 - `docs/`：架构、评测与维护说明。
 
 界面统一调用 `applyAction`，不自行扣币或改变胜负。
-规则层独立于 React，可供后续局域网服务复用；本版本没有联网同步。
+规则层独立于 React；联机服务器复用同一规则引擎，负责裁定、同步和存档。
 
 ## 本地主题
 

@@ -9,16 +9,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node scripts/verify-art.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/verify-art.mjs && tsc --noEmit && vite build && node scripts/optimize-art.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:art": "node scripts/verify-art.mjs",
-    "check": "node scripts/verify-art.mjs && tsc --noEmit && vitest run && vite build",
+    "check": "node scripts/verify-art.mjs && tsc --noEmit && vitest run && vite build && node scripts/optimize-art.mjs",
     "server": "tsx server/main.ts",
     "benchmark:online": "tsx scripts/benchmark-online.ts",
     "host:lan": "tsx server/host.ts",
-    "host:public": "tsx server/host.ts --public"
+    "host:public": "tsx server/host.ts --public",
+    "test:e2e": "playwright test",
+    "host:ssh": "tsx server/host.ts --ssh"
   },
   "dependencies": {
     "react": "^19.2.0",
@@ -28,9 +30,11 @@
     "tsx": "^4.23.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "sharp": "^0.35.5",
     "typescript": "~5.9.3",
     "vite": "^7.2.2",
     "vitest": "^4.0.8"

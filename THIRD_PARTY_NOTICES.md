@@ -71,6 +71,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Build and acceptance tools
+
+Build and browser-acceptance tooling additionally uses Sharp and Playwright (Apache-2.0).
+They are development dependencies and are not embedded in the browser bundle. Their
+packages retain their own licenses and third-party notices, including Sharp's native
+image-library dependencies. Installing or redistributing those tools is governed by
+their included licenses; this project's MIT license does not replace them.
+
 ## React, React DOM and Scheduler
 
 The prebuilt browser bundle includes these MIT-licensed runtime libraries. Their shared license text follows:

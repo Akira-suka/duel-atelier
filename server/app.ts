@@ -1,5 +1,7 @@
 import { createReadStream } from 'node:fs';
-import { realpath, stat } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
+import { gzip } from 'node:zlib';
+import { promisify } from 'node:util';
 import { createServer } from 'node:http';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { Server, type Socket } from 'socket.io';
@@ -12,7 +14,8 @@ type Peer = Socket<ClientEvents, ServerEvents, Record<string, never>, { seat?: S
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
 const codePattern = /^[A-HJ-NP-Z2-9]{8}$/;
-const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
+const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp' };
+const gzipAsync = promisify(gzip);
 
 export function createOnlineServer(options: { database: string; staticRoot?: string; origins?: string[]; maxRooms?: number; maxConnections?: number }) {
   const store = new RoomStore(options.database, options.maxRooms);
@@ -25,12 +28,28 @@ export function createOnlineServer(options: { database: string; staticRoot?: str
     try {
       const root = await realpath(options.staticRoot);
       const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname);
-      const path = await realpath(resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname)));
+      let path = await realpath(resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname)));
+      if (path.endsWith('.png') && request.headers.accept?.includes('image/webp')) {
+        try { path = await realpath(path.slice(0, -4) + '.webp'); } catch { /* Original remains usable without derivatives. */ }
+      }
       const rel = relative(root, path);
-      if (rel === '..' || rel.startsWith('..' + sep) || isAbsolute(rel) || !(await stat(path)).isFile()) { response.writeHead(404).end(); return; }
-      response.writeHead(200, { 'Content-Type': mime[extname(path)] ?? 'application/octet-stream', 'Cache-Control': rel.startsWith('assets' + sep) ? 'public,max-age=31536000,immutable' : 'no-cache' });
+      const file = await stat(path);
+      if (rel === '..' || rel.startsWith('..' + sep) || isAbsolute(rel) || !file.isFile()) { response.writeHead(404).end(); return; }
+      const headers = { 'Content-Type': mime[extname(path)] ?? 'application/octet-stream', 'Cache-Control': rel.startsWith('assets' + sep) ? 'public,max-age=31536000,immutable' : rel.startsWith('art' + sep) ? 'public,max-age=3600' : 'no-cache', Vary: 'Accept, Accept-Encoding', ETag: `W/"${file.size}-${file.mtimeMs}"` };
+      if (request.headers['if-none-match'] === headers.ETag) { response.writeHead(304, headers).end(); return; }
+      // Bound transient memory: only small text files are buffered; large artwork stays streamed.
+      const acceptsGzip = (request.headers['accept-encoding'] ?? '').split(',').some(value => /^gzip(?:\s*;\s*q=(?:1(?:\.0*)?|0\.\d*[1-9]\d*))?$/i.test(value.trim()));
+      if (file.size <= 1024 * 1024 && /\.(?:html|js|css|svg)$/.test(path) && acceptsGzip) {
+        const compressed = await gzipAsync(await readFile(path));
+        response.writeHead(200, { ...headers, 'Content-Encoding': 'gzip', 'Content-Length': compressed.length });
+        response.end(request.method === 'HEAD' ? undefined : compressed); return;
+      }
+      response.writeHead(200, { ...headers, 'Content-Length': file.size });
       if (request.method === 'HEAD') response.end();
-      else createReadStream(path).on('error', () => response.destroy()).pipe(response);
+      else {
+        const stream = createReadStream(path).on('error', () => response.destroy());
+        response.once('close', () => stream.destroy()); stream.pipe(response);
+      }
     } catch { response.writeHead(404).end(); }
   });
   const io = new Server<ClientEvents, ServerEvents, Record<string, never>, { seat?: Seat }>(http, {

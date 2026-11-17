@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { get } from 'node:http';
+import { gunzipSync } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -48,6 +50,37 @@ afterEach(async () => {
 });
 
 describe('authoritative online transport', () => {
+  it('serves exact-length compressed scripts and streams uncompressed artwork', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'duel-online-static-')); folders.push(root);
+    const script = 'export const message = "friends";\n'.repeat(200);
+    writeFileSync(join(root, 'app.js'), script); writeFileSync(join(root, 'art.png'), 'image-test');
+    writeFileSync(join(root, 'art.webp'), 'webp-test');
+    const { url } = await start(':memory:', { staticRoot: root });
+    const request = (path: string, encoding: string, method = 'GET') => new Promise<{ headers: import('node:http').IncomingHttpHeaders; body: Buffer }>((resolve, reject) => {
+      get(url + path, { method, headers: { 'Accept-Encoding': encoding } }, response => {
+        const chunks: Buffer[] = []; response.on('data', chunk => chunks.push(chunk));
+        response.on('end', () => resolve({ headers: response.headers, body: Buffer.concat(chunks) })); response.on('error', reject);
+      }).on('error', reject);
+    });
+    const compressed = await request('/app.js', 'gzip, deflate');
+    expect(compressed.headers['content-encoding']).toBe('gzip');
+    expect(Number(compressed.headers['content-length'])).toBe(compressed.body.length);
+    expect(compressed.body.length).toBeLessThan(script.length / 2);
+    expect(gunzipSync(compressed.body).toString()).toBe(script);
+    const head = await request('/app.js', 'gzip', 'HEAD');
+    expect(head.body.length).toBe(0); expect(head.headers['content-length']).toBe(compressed.headers['content-length']);
+    const plain = await request('/app.js', 'gzip;q=0');
+    expect(plain.headers['content-encoding']).toBeUndefined(); expect(plain.body.toString()).toBe(script);
+    const art = await request('/art.png', 'gzip');
+    expect(art.headers['content-encoding']).toBeUndefined(); expect(art.body.toString()).toBe('image-test');
+    expect(Number(art.headers['content-length'])).toBe(art.body.length);
+    const webp = await fetch(url + '/art.png', { headers: { Accept: 'image/webp' } });
+    expect(webp.headers.get('content-type')).toBe('image/webp');
+    expect(webp.headers.get('vary')).toContain('Accept'); expect(await webp.text()).toBe('webp-test');
+    const cached = await fetch(url + '/art.png', { headers: { Accept: 'image/webp', 'If-None-Match': webp.headers.get('etag')! } });
+    expect(cached.status).toBe(304); expect(await cached.text()).toBe('');
+    expect((await fetch(url + '/../package.json')).status).toBe(404);
+  });
   it('enforces seat, turn, revision, schema and idempotency; spectators cannot read a game', async () => {
     const { app, url } = await start(); const { a, b, first, second } = await pair(url);
     expect(first.ready).toBe(false); expect(second.ready).toBe(true);
