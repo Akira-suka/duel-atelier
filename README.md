@@ -1,7 +1,7 @@
 # Duel Atelier · 对决工坊
 
-A free, open-source local two-player strategy game and AI analysis sandbox.
-非官方的 Splendor Duel 基础版规则实现，供学习、研究和双人同机对战参考。
+A free, open-source two-player strategy game and AI analysis sandbox, with local and online play.
+非官方的 Splendor Duel 基础版规则实现，供学习、研究、双人同机及网上联机对战参考。
 
 ![公开版牌桌](docs/images/table.jpg)
 
@@ -30,6 +30,14 @@ npm run preview
 推荐电脑横屏。浏览器本地自动保存对局与已完成的分析样本，支持 JSON 导入/导出；
 刷新后可继续兼容的分析，删除浏览器数据会删除存档。重要对局请导出 JSON 备份。
 
+## 网上双人联机（v0.4）
+
+安装源码依赖后运行 `npm run build`、`npm run server`，访问 `http://127.0.0.1:3001/#online`。
+创建者分享邀请码，另一位玩家在同一服务器加入。保留原有同机模式，菜单可切换。
+支持座位凭证、断线重连、服务器重启恢复和 SQLite 存档；完整回放仅在终局开放。
+网上使用需要部署 Node 服务与 HTTPS，GitHub Pages 只能托管静态页面，不能运行这个房间服务器。
+部署、数据保留、资源上限与备份说明见 [ONLINE.md](docs/ONLINE.md)。
+
 ## 已实现
 
 - 同机热座、私人预留牌遮挡、三种获胜条件和完整卡牌能力流程。
@@ -42,6 +50,8 @@ npm run preview
 - 分析样本随存档保存，刷新或导入后核验局面与策略版本，再从未完成的样本继续。
 - 最近已完成对局自动归档；历史回放不覆盖当前对局。
 - 确定性规则引擎、存档校验及可复现测试。
+- 邀请码联机、服务端裁定、请求去重、按玩家过滤隐藏信息、终局回放下载。
+- 回放红蓝操作背景、候选行动比较与整局表现参考分（新增评价目前仅页面内缓存）。
 
 当前模拟胜率取决于模拟策略，并非经过真人对局校准的概率。
 旧版纯局面存档可以继续游戏，但无法恢复导入前的行动历史。

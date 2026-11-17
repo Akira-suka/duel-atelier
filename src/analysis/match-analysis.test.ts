@@ -60,6 +60,64 @@ describe('shared background analysis ownership', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 
+  it('finishes whole-match grading beyond the detail cache and pauses on close', () => {
+    const workers: FakeWorker[] = [];
+    const analysis = new MatchAnalysis(() => { const worker = new FakeWorker(); workers.push(worker); return worker; });
+    let game = createGame('persisted-terminal');
+    const record = createMatch(game);
+    for (let step = 0; step < 600 && game.winner === null; step++) {
+      const action = chooseSimulationAction(game, () => .5)!;
+      const next = applyAction(game, action); if (!next.ok) throw Error(next.error);
+      record.actions.push(action); game = next.state;
+    }
+    expect(game.winner).not.toBeNull();
+    expect(record.actions.length).toBeGreaterThan(64);
+    analysis.update(record, game); analysis.setView(record.actions.length);
+    analysis.requestReview(record.actions.length); analysis.requestPerformance();
+    let reviews = 0;
+    for (let iteration = 0; iteration < record.actions.length * 3 && !analysis.performance()[0].complete; iteration++) {
+      vi.advanceTimersByTime(0);
+      const worker = workers.at(-1)!; const command = worker.messages.at(-1)!;
+      if (command.type === 'review') {
+        reviews++;
+        const actual = { action: command.action, wins: 24, losses: 0, unfinished: 0, probability: 1 };
+        worker.send({ type: 'review', id: command.id, review: { actual, candidates: [actual], samples: 24, legalCount: 2, score: 100, loss: 0 } });
+        worker.send({ type: 'done', id: command.id });
+      } else worker.finish();
+    }
+    expect(reviews).toBe(record.actions.length);
+    expect(analysis.performance().map(row => row.score)).toEqual([100, 100]);
+    expect(analysis.review(record.actions.length)).toBeDefined();
+    expect(workers).toHaveLength(1);
+    analysis.setView(null); vi.advanceTimersByTime(1000);
+    expect(analysis.diagnostics.inFlight).toBe(0);
+    expect(workers[0].terminated).toBe(true);
+  });
+
+  it('routes replay action reviews through the sole worker and caches their result', () => {
+    const workers: FakeWorker[] = [];
+    const analysis = new MatchAnalysis(() => { const worker = new FakeWorker(); workers.push(worker); return worker; });
+    const { record, game } = terminalContinuation();
+    analysis.update(record, game); analysis.setView(1); analysis.requestReview(1);
+    vi.advanceTimersByTime(0);
+    expect(workers).toHaveLength(1);
+    const command = workers[0].messages[0];
+    expect(command.type).toBe('review');
+    if (command.type !== 'review') throw Error('Expected review');
+    expect(command.state.revision).toBe(record.initial.revision);
+    expect(command.action).toEqual(record.actions[0]);
+    const actual = { action: command.action, wins: 24, losses: 0, unfinished: 0, probability: 1 };
+    const review = { actual, candidates: [actual], samples: 24, legalCount: 1, score: 100, loss: 0 };
+    workers[0].send({ type: 'review', id: command.id, review });
+    workers[0].send({ type: 'done', id: command.id });
+    expect(analysis.review(1)).toEqual(review);
+    analysis.requestReview(1); vi.advanceTimersByTime(0);
+    expect(workers).toHaveLength(1);
+    expect(workers[0].messages.filter(message => message.type === 'review')).toHaveLength(1);
+    const fresh = createGame('review-reset'); analysis.update(createMatch(fresh), fresh);
+    expect(analysis.review(1)).toBeUndefined(); analysis.suspend();
+  });
+
   it('keeps one worker and one in-flight snapshot during rapid appends, with no live odds exposed', () => {
     let { analysis, workers, record, game } = setup();
     vi.advanceTimersByTime(150);

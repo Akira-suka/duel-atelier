@@ -227,3 +227,20 @@ button svg { pointer-events: none; }
 .history-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .archive-save-warning { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 1100; padding: 9px 16px; border: 1px solid #bba26c; background: #2e231d; color: #ffe0a1; font-size: 12px; }
 .archive-save-warning button { margin-left: 12px; padding: 5px 10px; border: 1px solid #bba26c; border-radius: 3px; color: #ffe0a1; background: #4a3926; }
+
+/* Assets above the icon, held tokens beside it. Shared by seats and replay. */
+.resource-count { display: inline-grid; grid-template-columns: 25px auto; grid-template-rows: 18px 27px; gap: 1px 4px; align-items: center; justify-content: center; font: 700 16px/1 Arial,sans-serif; color: #f6eddd; }
+.resource-count .resource-assets { grid-column: 1; text-align: center; font-size: 13px; color: #c9d6eb; }
+.resource-count > .gem { grid-column: 1; grid-row: 2; width: 25px; height: 25px; }
+.resource-count > b { grid-column: 2; grid-row: 2; font: inherit; }
+.seat-resource-grid, .replay-resource-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 5px; margin: 12px 0; }
+.seat-special, .replay-special { display: flex; justify-content: center; align-items: center; gap: 16px; border-top: 1px solid #a5b5cc33; padding-top: 5px; }
+.seat-special .resource-count, .replay-special .resource-count { grid-template-rows: 0 27px; }
+.seat-privilege { display: flex; align-items: center; gap: 4px; }
+.seat-privilege .scroll-piece { width: 22px; height: 24px; }
+.seat-resource-grid { gap: 2px; }
+.seat-resource-grid .resource-count { grid-template-columns: 16px 10px; grid-template-rows: 16px 22px; gap: 1px; font-size: 12px; }
+.seat-resource-grid .resource-assets { font-size: 11px; }
+.seat-resource-grid .resource-count > .gem { width: 16px; height: 20px; }
+.seat-resource-grid .resource-count > b { min-width: 0; text-align: right; }
+.seat-special { gap: 10px; }

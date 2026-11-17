@@ -38,7 +38,7 @@ function wallet(value: unknown): boolean {
 }
 
 /** Check untrusted JSON before allowing it to reach the typed rules engine. */
-function action(value: unknown): value is Action {
+export function isAction(value: unknown): value is Action {
   if (!object(value)) return false;
   switch (value.type) {
     case 'refill': return keys(value, ['type']);
@@ -71,7 +71,7 @@ function initialState(value: unknown): GameState {
 
 function recordShape(value: unknown): asserts value is MatchRecord {
   if (!object(value) || !keys(value, ['version', 'initial', 'actions'], ['analysis']) || value.version !== 1
-    || !Array.isArray(value.actions) || value.actions.length > MAX_MATCH_ACTIONS || !value.actions.every(action)) {
+    || !Array.isArray(value.actions) || value.actions.length > MAX_MATCH_ACTIONS || !value.actions.every(isAction)) {
     throw new Error('对局记录格式无效或动作数量超过上限。');
   }
 }

@@ -1,3 +1,5 @@
+import type { ActionReview } from './action-review';
+import { summarizePerformance, type DecisionLoss } from './match-performance';
 import type { GameState } from '../game/types';
 import { MAX_MATCH_ACTIONS, type MatchRecord } from '../game/match';
 import { ReplayWindow } from '../game/replay-window';
@@ -19,6 +21,11 @@ export const ANALYSIS_BATCH = 2;
 
 /** One owner for live play and replay. Queue = indices implicit in the action record. */
 export class MatchAnalysis {
+  private reviews = new Map<number, ActionReview>();
+  private reviewIndex: number | null = null;
+  private decisions = new Map<number, DecisionLoss>();
+  private performanceRequested = false;
+  private preferReview = true;
   private record: MatchRecord | null = null;
   private frames: ReplayWindow | null = null;
   private values: Record<AnalysisMethod, (WinEstimate | undefined)[]> = { baseline: [], search: [] };
@@ -46,7 +53,8 @@ export class MatchAnalysis {
     const continuation = previous?.initial === record.initial && record.actions.length >= previous.actions.length
       && previous.actions.every((action, index) => action === record.actions[index]);
     if (!continuation) {
-      this.halt(); this.values = { baseline: [], search: [] }; this.cursor = 0; this.view = null; this.error = '';
+      this.decisions.clear(); this.performanceRequested = false;
+      this.halt(); this.reviews.clear(); this.reviewIndex = null; this.values = { baseline: [], search: [] }; this.cursor = 0; this.view = null; this.error = '';
       this.keys.clear(); this.targets = { baseline: new Map(), search: new Map() };
       this.frames = new ReplayWindow(record);
     }
@@ -76,6 +84,13 @@ export class MatchAnalysis {
       this.emit();
     } else this.view = null;
     if (!this.canRun()) this.halt(); else this.schedule();
+  }
+  review(index: number) { return this.finished ? this.reviews.get(index) : undefined; }
+  performance() { return summarizePerformance(this.finished ? this.decisions.values() : [], this.record?.actions.length ?? 0, (this.record?.initial.revision ?? 0) > 0); }
+  requestPerformance() { if (this.finished) { this.performanceRequested = true; this.emit(); this.schedule(); } }
+  requestReview(index: number | null) {
+    this.reviewIndex = this.finished && index !== null && index > 0 && index <= this.record!.actions.length ? index : null;
+    this.schedule();
   }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   /** Owned compact counts; never mix results into a different or superseded record. */
@@ -153,7 +168,12 @@ export class MatchAnalysis {
   }
   private dispatch() {
     if (!this.canRun() || !this.record || this.job) return;
-    const next = this.choose();
+    let reviewIndex = this.view && this.reviewIndex !== null && !this.reviews.has(this.reviewIndex) ? this.reviewIndex : null;
+    const estimate = this.choose();
+    if (reviewIndex === null && this.view && this.performanceRequested && (this.preferReview || !estimate)) {
+      for (let index = 1; index <= this.record.actions.length; index++) if (!this.decisions.has(index)) { reviewIndex = index; break; }
+    }
+    const next = reviewIndex !== null ? { index: reviewIndex, method: 'baseline' as const, target: 24 } : estimate;
     if (!next) { this.worker?.terminate(); this.worker = null; this.emit(); return; }
     try {
       const state = this.frames!.get(next.index);
@@ -165,7 +185,13 @@ export class MatchAnalysis {
         worker.onmessage = event => {
           if (this.worker !== worker || event.data.id !== this.job?.id) return;
           const message = event.data; const job = this.job;
-          if (message.type === 'point') {
+          if (message.type === 'review') {
+            const before = this.frames!.get(job.index - 1);
+            this.decisions.set(job.index, { actor: before.turn, turn: before.turnNumber, loss: message.review.loss, forced: message.review.legalCount === 1 });
+            this.reviews.set(job.index, message.review);
+            if (this.reviews.size > 64) this.reviews.delete([...this.reviews.keys()].find(index => index !== this.reviewIndex)!);
+            this.emit();
+          } else if (message.type === 'point') {
             this.values[job.method][job.index] = message.estimate; this.emit();
           } else if (message.type === 'done') {
             this.job = null; this.schedule(); this.emit();
@@ -173,7 +199,13 @@ export class MatchAnalysis {
         };
         worker.onerror = event => { if (this.worker === worker) { this.error = event.message || '后台分析中断'; this.halt(); } };
       }
+      if (reviewIndex !== null) {
+        this.preferReview = false;
+        this.worker.postMessage({ type: 'review', id, state: this.frames!.get(reviewIndex - 1), action: this.record.actions[reviewIndex - 1] });
+        this.emit(); return;
+      }
       const resume = this.values[next.method][next.index];
+      this.preferReview = true;
       const target = Math.min(next.target, (resume?.requested ?? 0) + ANALYSIS_BATCH);
       this.worker.postMessage({ type: 'analyze', id, states: [state], method: next.method, resume: [resume],
         options: { samples: target }, restRatio: this.view ? 0 : 1 });

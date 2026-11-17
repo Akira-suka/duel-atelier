@@ -13,3 +13,8 @@ releases/
 .publish/
 *.zip
 *.tsbuildinfo
+
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

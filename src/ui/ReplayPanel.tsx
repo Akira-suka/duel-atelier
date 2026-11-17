@@ -1,3 +1,4 @@
+import { ResourceCount } from './ResourceCount';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { getJewel, getRoyal } from '../game/catalog';
 import { getStats } from '../game/engine';
@@ -8,7 +9,7 @@ import { GEM_COLORS, TOKEN_COLORS, type Action, type CardSource, type GameState,
 import type { WinEstimate } from '../analysis/win-probability';
 import { STANDARD_SAMPLES, DEEP_SAMPLES, type AnalysisMethod } from '../analysis/progressive';
 import { getCardArt, RESOURCE_NAMES } from '../theme';
-import { Card, Crown, Gem, Royal, Token } from './TablePieces';
+import { Card, Crown, Royal, Token } from './TablePieces';
 import './replay.css';
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
@@ -28,7 +29,7 @@ function actionSummary(action: Action, before: GameState): string {
     case 'refill': detail = '补充筹码盘'; break;
     case 'takeTokens': detail = `拿取${action.indices.map(tokenAt).join('、')}`; break;
     case 'reserve': detail = action.source.kind === 'deck' ? `从 ${action.source.level} 级牌堆盲预留` : `预留「${cardName(action.source)}」`; break;
-    case 'buy': detail = `购买「${cardName(action.source)}」`; break;
+    case 'buy': detail = `购买「${cardName(action.source)}」${action.payment ? `（付款：${TOKEN_COLORS.filter(color => action.payment![color] > 0).map(color => `${RESOURCE_NAMES[color]} ${action.payment![color]}`).join('、') || '免费'}）` : ''}`; break;
     case 'chooseColor': detail = `将加成设为${RESOURCE_NAMES[action.color]}`; break;
     case 'takeBonusToken': detail = `获得同色奖励：${tokenAt(action.index)}`; break;
     case 'stealToken': detail = `拿取对手的${RESOURCE_NAMES[action.color]}`; break;
@@ -38,8 +39,8 @@ function actionSummary(action: Action, before: GameState): string {
   return `${actor.name} · ${detail}`;
 }
 
-function ProbabilityChart({ estimates, index, count, names, onSelect }: {
-  estimates: (WinEstimate | undefined)[]; index: number; count: number;
+function ProbabilityChart({ estimates, index, count, names, actors, onSelect }: {
+  actors: PlayerId[]; estimates: (WinEstimate | undefined)[]; index: number; count: number;
   names: [string, string]; onSelect: (index: number) => void;
 }) {
   const svg = useRef<SVGSVGElement>(null);
@@ -69,6 +70,7 @@ function ProbabilityChart({ estimates, index, count, names, onSelect }: {
         const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
         onSelect(Math.round(Math.max(0, Math.min(1, (point.x - 36) / (width - 72))) * Math.max(0, count - 1)));
       }}>
+      {actors.map((actor, step) => <rect key={step} className={`replay-turn-band replay-turn-band-${actor}`} x={x(step)} y="8" width={Math.max(0, x(step + 1) - x(step))} height="104"><title>{names[actor]} · 第 {step + 1} 步</title></rect>)}
       {[0, .5, 1].map(value => <g key={value}><line className="replay-gridline" x1="36" x2={width - 36} y1={y(value)} y2={y(value)} /><text x="28" y={y(value) + 4} textAnchor="end">{percent(value)}</text></g>)}
       {groups.map((steps, group) => <g key={group}>
         {steps.length > 1 && <polygon className="replay-confidence" points={[
@@ -83,7 +85,7 @@ function ProbabilityChart({ estimates, index, count, names, onSelect }: {
       <line className="replay-cursor" x1={x(index)} x2={x(index)} y1="8" y2="112" />
       <text x="36" y="125">起始</text><text x={width - 36} y="125" textAnchor="end">{count - 1} 步</text>
     </svg>
-    <div className="replay-legend"><span className="replay-name-0">● {names[0]}</span><span className="replay-name-1">● {names[1]}</span><span>阴影：{names[0]} 95% 抽样区间</span></div>
+    <div className="replay-legend"><span className="replay-name-0">● {names[0]}</span><span className="replay-name-1">● {names[1]}</span><span>红／蓝竖带：该段行动方 · 阴影：95% 抽样区间</span></div>
   </div>;
 }
 
@@ -96,11 +98,8 @@ function PlayerSnapshot({ state, previous, id }: { state: GameState; previous: G
   return <section className={`replay-player replay-player-${id}${state.turn === id ? ' replay-player-active' : ''}`} aria-label={`${player.name}在此步骤的状态`}>
     <div className="replay-player-title"><h3>{player.name}</h3>{state.winner === id ? <span>胜者</span> : state.turn === id && state.winner === null ? <span>当前行动</span> : null}</div>
     <div className="replay-stats"><span>声望 <b>{stats.points}</b>{stats.points !== prior.points && <em>{delta(stats.points - prior.points)}</em>}</span><span><Crown /><b>{stats.crowns}</b>{stats.crowns !== prior.crowns && <em>{delta(stats.crowns - prior.crowns)}</em>}</span><span>已购 <b>{player.cards.length}</b>{gained.size > 0 && <em>+{gained.size}</em>}</span><span>预留 <b>{player.reserved.length}</b></span><span>特权 <b>{player.privileges}</b>{player.privileges !== before.privileges && <em>{delta(player.privileges - before.privileges)}</em>}</span></div>
-    <div className="replay-resources">{TOKEN_COLORS.map(color => {
-      const change = player.tokens[color] - before.tokens[color];
-      return <span key={color} title={`${RESOURCE_NAMES[color]} ${player.tokens[color]}枚${change ? `，本步${delta(change)}` : ''}`}><Gem color={color} small /><b>{player.tokens[color]}</b>{change !== 0 && <em className={change < 0 ? 'replay-loss' : ''}>{delta(change)}</em>}</span>;
-    })}</div>
-    <div className="replay-bonuses">{GEM_COLORS.map(color => <span key={color} title={`${RESOURCE_NAMES[color]}：永久加成${stats.bonuses[color]}，同色声望${stats.colorPoints[color]}`}><Gem color={color} small /><b>+{stats.bonuses[color]}</b><small>{stats.colorPoints[color]}分</small></span>)}</div>
+    <div className="replay-resource-grid">{GEM_COLORS.map(color => <ResourceCount key={color} color={color} tokens={player.tokens[color]} assets={stats.bonuses[color]} />)}</div>
+    <div className="replay-special">{(['gold', 'pearl'] as const).map(color => <ResourceCount key={color} color={color} tokens={player.tokens[color]} />)}<span>同色声望：{GEM_COLORS.map(color => stats.colorPoints[color]).join(' / ')}</span></div>
     <details className="replay-card-details"><summary>卡牌详情 · 已购 {player.cards.length} / 预留 {player.reserved.length} / 王室 {player.royals.length}</summary>
       <div className="replay-owned" aria-label="此时已购卡牌">{player.cards.map(card => <div key={card.cardId} className={gained.has(card.cardId) ? 'replay-gained' : ''} title={getCardArt(card.cardId).title}><Card card={getJewel(card.cardId)} disabled /></div>)}{player.cards.length === 0 && <span className="replay-empty">尚未购牌</span>}</div>
       {player.reserved.length > 0 && <><h4>当时预留</h4><div className="replay-owned" aria-label="此时预留卡牌">{player.reserved.map(id => <div key={id} title={getCardArt(id).title}><Card card={getJewel(id)} disabled /></div>)}</div></>}
@@ -111,6 +110,10 @@ function PlayerSnapshot({ state, previous, id }: { state: GameState; previous: G
 
 export function ReplayPanel({ record, analysis, onClose, notice }: { record: MatchRecord; analysis: MatchAnalysis; onClose: () => void; notice?: ReactNode }) {
   const count = record.actions.length + 1;
+  const actors = useMemo(() => {
+    const frames = new ReplayWindow(record);
+    return record.actions.map((_, step) => frames.get(step).turn);
+  }, [record]);
   const frameWindow = useMemo(() => new ReplayWindow(record), [record]);
   const [index, setIndex] = useState(count - 1);
   const [playing, setPlaying] = useState(false);
@@ -127,6 +130,8 @@ export function ReplayPanel({ record, analysis, onClose, notice }: { record: Mat
   const analysisError = analysis.error;
   const analyzing = analysis.working;
   const current = estimates[safeIndex];
+  const review = analysis.review(safeIndex);
+  const performance = analysis.performance();
   const roundedProbability = current?.probability != null ? Math.round(current.probability * 100) : null;
   const names: [string, string] = [state.players[0].name, state.players[1].name];
   const partial = record.initial.revision > 0;
@@ -137,6 +142,7 @@ export function ReplayPanel({ record, analysis, onClose, notice }: { record: Mat
   useEffect(() => analysis.subscribe(() => refresh(value => value + 1)), [analysis]);
   useEffect(() => {
     analysis.setView(safeIndex, method);
+    analysis.requestReview(safeIndex || null);
     return () => analysis.setView(null);
   }, [analysis, safeIndex, method]);
   useEffect(() => {
@@ -173,10 +179,19 @@ export function ReplayPanel({ record, analysis, onClose, notice }: { record: Mat
           <span>搜索策略对战更强，概率误差暂未优于基线</span>
         </div>
         <div className="replay-probabilities">{([0, 1] as const).map(id => <div key={id} className={`replay-probability replay-name-${id}`}><span>{names[id]}</span><strong>{roundedProbability !== null ? `${id === 0 ? roundedProbability : 100 - roundedProbability}%` : estimates[safeIndex] ? '暂无估计' : analysisError ? '未计算' : '计算中'}</strong><small>{current?.terminal ? '本局结果' : current?.probability != null ? `${id === 0 ? Math.round(current.interval[0] * 100) : 100 - Math.round(current.interval[1] * 100)}%–${id === 0 ? Math.round(current.interval[1] * 100) : 100 - Math.round(current.interval[0] * 100)}%` : '—'}</small></div>)}<div className="replay-analysis-status"><b>{method === 'search' ? '搜索续弈估计' : '快速续弈估计'}</b><span>{analyzing ? '正在分析' : analysisError ? '分析已中断' : analysis.paused ? '已暂停' : '分析完成'} · {finishedPoints}/{count} 已出结果 · {refinedPoints} 已精算</span><progress max={count} value={refinedPoints} aria-label="胜率分析进度" /><small>{current?.terminal ? '终局直接采用真实结果' : current ? `${current.completed}/${current.requested} 次模拟完成${current.unfinished ? `，${current.unfinished} 次截断` : ''}` : `先 8 次，再补至 ${STANDARD_SAMPLES} 次`}</small><button type="button" onClick={deepen} disabled={!!current?.terminal || (current?.requested ?? 0) >= DEEP_SAMPLES || !!analysisError}>精算此步 · {DEEP_SAMPLES} 次</button></div></div>
-        <ProbabilityChart estimates={estimates} index={safeIndex} count={count} names={names} onSelect={select} />
+        <ProbabilityChart actors={actors} estimates={estimates} index={safeIndex} count={count} names={names} onSelect={select} />
         {analysisError && <p className="replay-error" role="status">{analysisError}；已完成的结果仍可查看，关闭重开可继续。</p>}
         <details className="replay-method"><summary>估计方法</summary><p>快速基线使用原有随机启发式策略；搜索复核加入战术检查与有限预算 MCTS。两种策略分别统计、分别缓存。每次从当前局面重新打乱未知牌库和袋中筹码，续弈到实际终局后统计胜负。搜索叶评分和访问次数不直接作为胜率。优先分析选中的步骤，其余步骤先做 8 次再补至 24 次，可单独精算至 64 次；对局期间可后台预计算，结果仅在结束后显示。关闭回放后恢复后台节流计算；关闭菜单里的预计算开关可停止后台任务。切换到其他标签页会暂停，返回后续算。局后分析使用双方当时预留牌的完整信息，不读取之后的实际行动。胜率仅针对这套模拟策略，不等于真人胜率。阴影是单个固定样本量的 95% 抽样区间，不保证整条曲线或反复查看时同时覆盖，也不包含策略误差；截断会扩大区间。最终真实胜者只用于终局帧。</p></details>
       </section>
+      <section className="match-performance" aria-label="整局表现结算">
+        <div className="action-review-heading"><strong>整局表现 · 模拟参考分</strong><button type="button" onClick={() => analysis.requestPerformance()} disabled={partial || !record.actions.length || performance[0].complete}>计算整局表现</button></div>
+        <div className="match-performance-players">{performance.map(item => <div key={item.actor} className={`replay-name-${item.actor}`}><b>{names[item.actor]}</b><strong>{item.score === null ? '—' : `${item.score} / 100`}</strong><span>{item.meanLoss === null ? '尚无完整评分' : `每回合平均损失 ${(item.meanLoss * 100).toFixed(1)} 个百分点`}</span></div>)}</div>
+        <small>{partial ? '这份存档缺少前半局，不计算整局分。' : `已比较 ${performance[0].reviewed} / ${performance[0].total} 步；全部比较后结算。`} 同一回合先平均，再对各回合等权平均；强制操作不计分。整局分 = 100 ×（1 − 平均损失）。没有可评分决策或存在未完成模拟时不出分。胜负不直接加减分；分数未校准为真人棋力，100 分也不证明最优。计算与胜率共用一个 Worker，关闭回放或切到其他标签页暂停；已完成评价仅在本次页面内缓存。</small>
+      </section>
+      {safeIndex > 0 && <section className="action-review" aria-label="操作评价">
+        <div className="action-review-heading"><strong>{previous.players[previous.turn].name} · 第 {safeIndex} 步评价</strong><span>{review ? review.loss === null ? '样本不足，暂不评价' : `估计损失 ${((review.loss ?? 0)*100).toFixed(1)} 个百分点` : analysisError ? '评价中断，可切换步骤重试' : '正在比较候选行动…'}</span></div>
+        {review && <><div className="action-review-options">{[...review.candidates.slice(0,2).map((item,i) => ({item,label:i === 0 ? '候选优选' : '候选次选'})),{item:review.actual,label:'实际操作'}].map(({item,label}) => <div key={label}><b>{label}</b><span>{actionSummary(item.action, previous)}</span><strong>{item.probability === null ? '未知' : percent(item.probability)}</strong><small>{item.wins}胜 / {item.losses}负 / {item.unfinished}截断</small></div>)}</div><details><summary>评分依据与不确定性</summary><p>以行动前局面、行动者视角比较：启发式筛选最多 6 个候选，并加入实际操作，每项用相同的 24 个随机种子进行快速基线续弈。优选仅指本次已测试候选，不保证全局最优；付款方式和隐藏牌信息也影响比较。单步只记录候选最高胜率与实际操作胜率之间的非负差值；有截断则不纳入有效评价。24 次采样噪声较大，接近的选项应视为难以区分。评价与上方可切换的胜率策略独立，固定使用快速基线。结果在本次页面内缓存，刷新后按需重算。</p></details></>}
+      </section>}
       <nav className="replay-controls" aria-label="回放步骤"><button type="button" onClick={() => select(0)} disabled={safeIndex === 0}>起始</button><button type="button" onClick={() => select(safeIndex - 1)} disabled={safeIndex === 0} aria-label="上一步">←</button><button type="button" className="replay-play" disabled={count < 2} onClick={() => { if (!playing && safeIndex === count - 1) setIndex(0); setPlaying(value => !value); }}>{playing ? '暂停' : '播放'}</button><button type="button" onClick={() => select(safeIndex + 1)} disabled={safeIndex === count - 1} aria-label="下一步">→</button><input type="range" min="0" max={count - 1} value={safeIndex} disabled={count < 2} aria-label="回放步骤" aria-valuetext={`第 ${safeIndex} 步，共 ${count - 1} 步`} onChange={event => select(Number(event.target.value))} /><output>{safeIndex} / {count - 1}</output><button type="button" onClick={() => select(count - 1)} disabled={safeIndex === count - 1}>终局</button></nav>
       <div className="replay-step"><b>{safeIndex === 0 ? '起始局面' : `第 ${safeIndex} 步`}</b><span>{summary ?? (state.winner !== null ? `${state.players[state.winner].name}获胜` : `第 ${state.turnNumber} 回合 · ${state.players[state.turn].name}`)}</span></div>
       <div className="replay-position">

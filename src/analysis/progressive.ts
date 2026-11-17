@@ -1,3 +1,5 @@
+import type { ActionReview } from './action-review';
+import type { Action } from '../game/types';
 import type { GameState } from '../game/types';
 import { runSearchPlayout } from './search-policy';
 import { analysisSettings, positionSeed, runPlayout, sampleSeed, summarizeEstimate, type AnalysisOptions, type PlayoutResult, type WinEstimate } from './win-probability';
@@ -6,10 +8,12 @@ export const STANDARD_SAMPLES = 24;
 export const DEEP_SAMPLES = 64;
 export type AnalysisMethod = 'baseline' | 'search';
 export type ProgressiveCommand =
+  | { type: 'review'; id: string; state: GameState; action: Action }
   | { type: 'analyze'; id: string; states: GameState[]; method?: AnalysisMethod; resume?: (WinEstimate | undefined)[]; focus?: number; options?: AnalysisOptions; restRatio?: number }
   | { type: 'focus'; id: string; index: number; deep?: boolean }
   | { type: 'cancel'; id: string };
 export type ProgressiveResponse =
+  | { type: 'review'; id: string; review: ActionReview }
   | { type: 'point'; id: string; index: number; estimate: WinEstimate }
   | { type: 'done'; id: string }
   | { type: 'error'; id: string; message: string };

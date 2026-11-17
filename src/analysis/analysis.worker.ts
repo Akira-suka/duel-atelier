@@ -1,3 +1,4 @@
+import { reviewAction } from './action-review';
 import { ProgressiveAnalysis, type ProgressiveCommand, type ProgressiveResponse } from './progressive';
 
 // One CPU worker. Yield between real playouts so focus/cancel messages can be handled.
@@ -41,6 +42,14 @@ self.onmessage = async (event: MessageEvent<ProgressiveCommand>) => {
     if (message.id !== activeId || !session) return;
     session.prioritize(message.index, message.deep);
     if (!running) await pump(generation, message.id, session, false);
+    return;
+  }
+  if (message.type === 'review') {
+    const token = ++generation; activeId = message.id;
+    try {
+      const review = await reviewAction(message.state, message.action, async () => { await yieldToMessages(); if (token !== generation) throw Error('cancelled'); });
+      if (token === generation) { send({ type: 'review', id: message.id, review }); send({ type: 'done', id: message.id }); }
+    } catch (error) { if (token === generation) send({ type: 'error', id: message.id, message: String(error) }); }
     return;
   }
   const job = ++generation;

@@ -1,0 +1,19 @@
+.online-viewport { height: calc(100dvh - 44px); margin-top: 44px; }
+.online-toolbar { position: fixed; inset: 0 0 auto; height: 44px; z-index: 20; display: flex; align-items: center; justify-content: center; gap: 12px; background: #111a28; font-size: 12px; }
+.online-toolbar button, .online-lobby button, .online-error button { border: 1px solid #657389; border-radius: 4px; background: #202d42; color: #efdfbe; padding: 6px 12px; }
+.online-lobby { max-width: 540px; margin: 100px auto; padding: 30px; background: #182131; border: 1px solid #53617b; }
+.online-lobby form { display: grid; gap: 15px; margin: 25px 0; }
+.online-lobby input { margin-left: 15px; max-width: 240px; padding: 8px; }
+.online-lobby button:disabled { opacity: .5; }
+.online-file { display: block; font-size: 13px; }
+.online-file input { max-width: 100%; }
+.online-error { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #4b262b; border: 1px solid #ba7c76; padding: 12px; z-index: 40; }
+.online-error button { margin-left: 15px; }
+.online-drawer { position: absolute; z-index: 12; inset: 50px 120px 180px 200px; padding: 25px; overflow: auto; background: #101a29f5; border: 1px solid #bda271; }
+.online-drawer .collection-cards { margin-top: 20px; }
+.online-wallet { display: inline-flex; align-items: center; gap: 5px; }
+.online-wallet input { width: 46px; color: #eee; background: #172338; border: 1px solid #768399; padding: 5px 2px; }
+.online-payment { position: relative; font-size: 13px; }
+.online-payment > div { position: absolute; bottom: 35px; left: -100px; min-width: 220px; display: grid; gap: 10px; background: #1b283d; padding: 18px; border: 1px solid #bfa577; }
+.online-payment summary { cursor: pointer; }
+@media(max-width:800px) { .online-toolbar { gap: 3px; font-size: 10px; overflow-x: auto; justify-content: flex-start; white-space: nowrap; } .online-toolbar button { padding: 5px; } }

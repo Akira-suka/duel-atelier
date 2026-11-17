@@ -1,3 +1,4 @@
+import { ResourceCount } from './ui/ResourceCount';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   applyAction, canBuy, countTokens, createGame, emptyWallet, getDiscountedCost,
@@ -62,7 +63,7 @@ function Modal({ title, className = '', onClose, children }: {
   </div>;
 }
 
-export default function App() {
+export default function App({ onOnline }: { onOnline?: () => void }) {
   const [match, setMatch] = useState(loadMatch);
   const { game, record } = match;
   const [handoff, setHandoff] = useState(true);
@@ -340,8 +341,8 @@ export default function App() {
       <div className="seat-info"><h2 className="seat-name">{player.name}</h2>
         <div className="seat-score"><span title="声望"><strong>{score.points}</strong><small>/20</small></span><span title="王冠"><Crown /><strong>{score.crowns}</strong><small>/10</small></span></div>
       </div>
-      <div className="seat-tokens">{TOKEN_COLORS.map(color => <span className="mini-token" key={color} data-motion-token={color} title={`${COLOR_NAMES[color]} ${player.tokens[color]}枚`}><Gem color={color} small /><b>{player.tokens[color]}</b></span>)}<span className="mini-token mini-scroll" title={`特权 ${player.privileges}`}><Scroll /><b>{player.privileges}</b></span></div>
-      <div className="seat-bonuses">{GEM_COLORS.map(color => <span className="seat-bonus" key={color} title={`${COLOR_NAMES[color]}加成 ${score.bonuses[color]}，同色声望 ${score.colorPoints[color]}`}><Gem color={color} small /><b>+{score.bonuses[color]}</b></span>)}</div>
+      <div className="seat-resource-grid">{GEM_COLORS.map(color => <ResourceCount key={color} color={color} tokens={player.tokens[color]} assets={score.bonuses[color]} />)}</div>
+      <div className="seat-special">{(['gold', 'pearl'] as const).map(color => <ResourceCount key={color} color={color} tokens={player.tokens[color]} />)}<span className="seat-privilege"><Scroll /><b>{player.privileges}</b></span></div>
       <div className="seat-links"><button type="button" onClick={() => setCollection(id)}>卡牌 {player.cards.length}</button><button type="button" data-motion-reserve={id} disabled={!active || handoff || game.phase === 'gameOver'} onClick={() => setReserveOpen(true)}>预留 {player.reserved.length}/3</button></div>
     </section>;
   }
@@ -385,7 +386,7 @@ export default function App() {
 
   return <div className="table-viewport"><div className={`game-table${handoff && game.phase !== 'gameOver' ? ' is-handoff' : ''}${inputLocked ? ' is-animating' : ''}`} inert={inputLocked || replayOpen || !!archived} aria-hidden={replayOpen || !!archived || undefined} aria-busy={inputLocked} style={{ transform: `translate(-50%, -50%) scale(${tableScale})` }}>
     <div className="table-menu"><span className="table-turn">{game.turnNumber}</span><button type="button" className="menu-toggle fullscreen-toggle" aria-label="全屏" aria-pressed={fullscreen} title={fullscreen ? '退出全屏' : '进入全屏'} onClick={() => { void toggleFullscreen(); }}>⛶</button><button type="button" className="menu-toggle" aria-label="对局菜单" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
-      {menuOpen && <div className="menu-popover"><button type="button" onClick={() => { setNewGameOpen(true); setMenuOpen(false); }}>新对局</button><button type="button" onClick={() => { setLogOpen(true); setMenuOpen(false); }}>行动记录</button><button type="button" aria-pressed={precompute} onClick={() => setPrecompute(value => !value)}>后台预计算：{precompute ? '开' : '关'}</button><button type="button" onClick={openHistory}>历史对局</button><button type="button" onClick={downloadSave}>导出存档</button><label className="import-button">导入存档<input type="file" accept=".json,application/json" onChange={event => { void importSave(event.target.files?.[0]); event.target.value = ''; }} /></label><small className={saveFailed ? 'save-warning' : 'save-status'}>{saveFailed ? '请导出保存' : '已保存'}</small></div>}
+      {menuOpen && <div className="menu-popover">{onOnline && <button type="button" onClick={onOnline}>网上双人联机</button>}<button type="button" onClick={() => { setNewGameOpen(true); setMenuOpen(false); }}>新对局</button><button type="button" onClick={() => { setLogOpen(true); setMenuOpen(false); }}>行动记录</button><button type="button" aria-pressed={precompute} onClick={() => setPrecompute(value => !value)}>后台预计算：{precompute ? '开' : '关'}</button><button type="button" onClick={openHistory}>历史对局</button><button type="button" onClick={downloadSave}>导出存档</button><label className="import-button">导入存档<input type="file" accept=".json,application/json" onChange={event => { void importSave(event.target.files?.[0]); event.target.value = ''; }} /></label><small className={saveFailed ? 'save-warning' : 'save-status'}>{saveFailed ? '请导出保存' : '已保存'}</small></div>}
     </div>
 
     <aside className="player-rail">{renderPlayer(0)}{renderPlayer(1)}</aside>
