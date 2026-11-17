@@ -16,7 +16,9 @@
     "verify:art": "node scripts/verify-art.mjs",
     "check": "node scripts/verify-art.mjs && tsc --noEmit && vitest run && vite build",
     "server": "tsx server/main.ts",
-    "benchmark:online": "tsx scripts/benchmark-online.ts"
+    "benchmark:online": "tsx scripts/benchmark-online.ts",
+    "host:lan": "tsx server/host.ts",
+    "host:public": "tsx server/host.ts --public"
   },
   "dependencies": {
     "react": "^19.2.0",

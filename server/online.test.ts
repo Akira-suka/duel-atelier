@@ -138,6 +138,18 @@ describe('authoritative online transport', () => {
     await new Promise<void>(resolve => client.once('connect_error', () => resolve()));
     expect(client.connected).toBe(false);
   });
+
+  it('accepts only the exact temporary public origin registered by the host', async () => {
+    const origins = ['http://localhost:3001'];
+    const { url } = await start(':memory:', { origins });
+    origins.push('https://friends-only.trycloudflare.com');
+    const trusted: Client = io(url, { transports: ['websocket'], extraHeaders: { Origin: origins[1] }, reconnection: false }); clients.push(trusted);
+    await new Promise<void>((resolve, reject) => { trusted.once('connect', resolve); trusted.once('connect_error', reject); });
+    expect(value(await trusted.timeout(2000).emitWithAck('enter', { token: token() })).seat).toBe(0);
+    const untrusted: Client = io(url, { transports: ['websocket'], extraHeaders: { Origin: 'https://another.trycloudflare.com' }, reconnection: false }); clients.push(untrusted);
+    await new Promise<void>(resolve => untrusted.once('connect_error', () => resolve()));
+    expect(untrusted.connected).toBe(false);
+  });
 });
 
 class MemoryStorage implements Storage {

@@ -32,11 +32,19 @@ npm run preview
 
 ## 网上双人联机（v0.4）
 
-安装源码依赖后运行 `npm run build`、`npm run server`，访问 `http://127.0.0.1:3001/#online`。
-创建者分享邀请码，另一位玩家在同一服务器加入。保留原有同机模式，菜单可切换。
-支持座位凭证、断线重连、服务器重启恢复和 SQLite 存档；完整回放仅在终局开放。
-网上使用需要部署 Node 服务与 HTTPS，GitHub Pages 只能托管静态页面，不能运行这个房间服务器。
-部署、数据保留、资源上限与备份说明见 [ONLINE.md](docs/ONLINE.md)。
+**房主用自己的电脑开服，朋友只需浏览器，不需要购买域名或租服务器。**
+
+Windows 下载源码、安装 Node.js 24+ 后，双击 `host-friends.cmd`：
+
+1. 选择「Public invite」供不同网络的朋友游玩；首次自动下载并校验 Cloudflare 官方便携隧道工具，不需要账号或域名。
+2. 房主打开终端显示的本机地址并创建房间。
+3. 将终端显示的临时 HTTPS 网址和网页里的邀请码一起发给朋友。
+
+同一网络可选「LAN only」。命令行对应 `npm run host:public` / `npm run host:lan`（先 `npm ci`、`npm run build`）。
+房主保持电脑和窗口运行；停止后临时网址失效，下次开服通常会换网址。继续旧局前请双方保存「重连凭证」。
+Quick Tunnel 是第三方临时服务，网络可达性与稳定性不保证；局域网方式不依赖它。
+保留原有同机模式。支持断线重连、主机重启恢复、SQLite 存档；完整回放仅在终局开放。
+开服、恢复与数据保留详见 [ONLINE.md](docs/ONLINE.md)。
 
 ## 已实现
 

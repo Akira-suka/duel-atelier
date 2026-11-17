@@ -11,3 +11,5 @@ public/art/eva
 *.zip
 *.sqlite*
 *.log
+
+tools
